@@ -22,28 +22,6 @@
 
 <p>
 
-## application.properties
-
-```
-spring.datasource.url=jdbc:mysql://localhost:3306/ils?serverTimezone=UTC
-spring.datasource.username=root
-spring.datasource.password=csedbadmin
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.current_session_context_class=org.springframework.orm.hibernate5.SpringSessionContext
-
-server.port=80
-
-### SSL settings ###
-#server.ssl.enabled=true
-#server.ssl.key-store=/home/ec2-user/ils_web/ils_web.jks
-#server.ssl.key-store-password=csedbadmin
-#server.ssl.key-password=csedbadmin
-#server.ssl.key-alias=ils_web
-#server.ssl.trust-store=/home/ec2-user/ils_web/ils_web.ts
-#server.ssl.trust-store-password=csedbadmin
-```
 
 ## pom.xml
 
