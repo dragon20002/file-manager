@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorator="layout/index">
+
+<th:block layout:fragment="css">
+<style>
+.upload-box-input {
+	border: 2px dashed dodgerblue;
+	border-radius: 5px;
+	width: 100%;
+	height: 300px;
+	padding: 150px 5px 0px 5px;
+	text-align: center;
+}
+.upload-box-label {
+	width: 100%;
+	text-align: center;
+}
+</style>
+</th:block>
+
+<th:block layout:fragment="script"></th:block>
+
+<div layout:fragment="content" class="container-fluid">
+	<div style="height: 10px"></div>
+
+	<form th:action="@{/files}" method="post"
+		enctype="multipart/form-data">
+
+		<div class="form-group upload-box">
+			<input type="file" class="upload-box-input" id="file" name="files"
+				data-multiple-caption="{count} 개 파일" multiple>
+
+			<label class="upload-box-label" for="file">파일을 드래그해서 놓아주세요!</label>
+		</div>
+
+		<div class="form-group text-center">
+			<button type="submit" class="btn btn-primary">올리기</button>
+		</div>
+
+	</form>
+
+</div>
+
+</html>
