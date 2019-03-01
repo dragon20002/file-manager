@@ -87,3 +87,8 @@
 
 </project>
 ```
+
+## Import to Eclipse
+1. Clone&Import this project<br>
+2. Right click the Project Name -> Spring Tools -> Add Spring Project Nature<br>
+3. Right click the Project Name -> Configure -> Convert to Maven Project<br>
