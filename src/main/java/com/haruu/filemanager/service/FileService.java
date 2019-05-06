@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FileService {
-	private static final String DIR_NAME = "files/";
+	public static final String DIR_NAME = "files/";
 
 	@Autowired
 	private ServletContext context;
@@ -39,5 +39,11 @@ public class FileService {
 		if (!dir.exists() && !dir.mkdirs())
 			return false;
 		return true;
+	}
+
+	public File[] findAll() {
+		String realPath = context.getRealPath("/") + DIR_NAME;
+		File directory = new File(realPath);
+		return (directory.exists()) ? directory.listFiles() : new File[0];
 	}
 }

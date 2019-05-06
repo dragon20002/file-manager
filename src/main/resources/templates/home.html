@@ -41,6 +41,21 @@
 
 	</form>
 
+	<table class="table-striped" th:if="${fileInfoList.size()} > 0">
+		<thead>
+			<tr style="text-align: center"><th>파일명</th><th>크기</th><th></th></tr>
+		</thead>
+		<tbody>
+			<tr style="text-align: center" th:each="fileInfo : ${fileInfoList}">
+				<td style="padding: 5px 50px 5px 50px" th:text="${fileInfo.getFirst()}"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="|${fileInfo.getSecond()} KB|"></td>
+				<td style="padding: 5px 50px 5px 50px">
+					<a th:href="@{'files/' + ${fileInfo.getFirst()}}" download>다운로드</a>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
 </div>
 
 </html>
