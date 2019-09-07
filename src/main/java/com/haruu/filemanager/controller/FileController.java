@@ -23,8 +23,9 @@ public class FileController {
 	public String addFiles(@RequestParam("files") MultipartFile[] files, Model model) {
 
 		try {
-			service.saveAll(files);
+			String realPath = service.saveAll(files);
 			model.addAttribute("success");
+			System.out.println("File Saved At " + realPath);
 		} catch (IllegalStateException | IOException e) {
 			e.printStackTrace();
 			model.addAttribute("error");

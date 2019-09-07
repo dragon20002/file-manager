@@ -1,7 +1,6 @@
 package com.haruu.filemanager.controller;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,20 +22,39 @@ public class HomeController {
 
 	@GetMapping(value = "/")
 	public String home(Model model, HttpServletRequest request) {
-		File[] files = fileService.findAll();
-		
-		List<Tuple2<String, Long>> fileInfoList = new ArrayList<>();
-		for (File file : files) {
-			Tuple2<String, Long> fileInfo = new Tuple2<>(file.getName(), file.length() / 1024);
-			fileInfoList.add(fileInfo);
-		}
-		
+
+		// 파일 목록
+		File[] files = fileService.findAll(0);
+		List<Tuple2<String, Long>> fileInfoList = fileService.getFileInfoList(files);
 		model.addAttribute("fileInfoList", fileInfoList);
 
-		String filePath = request.getLocalAddr() + ':' + request.getLocalPort() + '/' + FileService.DIR_NAME;
-		model.addAttribute("filePath", filePath);
+		// 영화 목록
+		files = fileService.findAll(0, FileService.VIDEOS);
+		List<Tuple2<String, Long>> videoInfoList = fileService.getVideoInfoList(files);
+
+		model.addAttribute("videoInfoList", videoInfoList);
+
+		model.addAttribute("dirName", FileService.DIR_NAME);
 
 		return "home";
+	}
+
+	@GetMapping(value = "/safe")
+	public String safeHome(Model model, HttpServletRequest request) {
+		// 파일 목록
+		File[] files = fileService.findAll(1);
+		List<Tuple2<String, Long>> safeFileInfoList = fileService.getFileInfoList(files);
+		model.addAttribute("safeFileInfoList", safeFileInfoList);
+
+		// 영화 목록
+		files = fileService.findAll(1, FileService.VIDEOS);
+		List<Tuple2<String, Long>> safeVideoInfoList = fileService.getVideoInfoList(files);
+
+		model.addAttribute("safeVideoInfoList", safeVideoInfoList);
+		
+		model.addAttribute("safeDirName", FileService.SAFE_DIR_NAME);
+
+		return home(model, request);
 	}
 
 	@GetMapping(value = "/error")

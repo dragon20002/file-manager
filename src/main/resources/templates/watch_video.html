@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorator="~{layout/index}">
+
+<th:block layout:fragment="css">
+<style>
+.upload-box-input {
+	border: 2px dashed dodgerblue;
+	border-radius: 5px;
+	width: 100%;
+	height: 300px;
+	padding: 150px 5px 0px 5px;
+	text-align: center;
+}
+.upload-box-label {
+	width: 100%;
+	text-align: center;
+}
+</style>
+</th:block>
+
+<th:block layout:fragment="script">
+<script>
+function failed(e) {
+  // video playback failed - show a message saying why
+  switch (e.target.error.code) {
+    case e.target.error.MEDIA_ERR_ABORTED:
+      alert('You aborted the video playback.');
+      break;
+    case e.target.error.MEDIA_ERR_NETWORK:
+      alert('A network error caused the video download to fail part-way.');
+      break;
+    case e.target.error.MEDIA_ERR_DECODE:
+      alert('The video playback was aborted due to a corruption problem or because the video used features your browser did not support.');
+      break;
+    case e.target.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+      alert('The video could not be loaded, either because the server or network failed or because the format is not supported.');
+      break;
+    default:
+      alert('An unknown error occurred.');
+      break;
+  }
+}
+</script>
+</th:block>
+
+<div layout:fragment="content" class="container-fluid">
+	<div style="height: 10px"></div>
+
+	<h4 th:text="${videoName}"></h4>
+	
+	<hr>
+
+	<video width=100% controls onerror="failed(event)">
+		<!-- MKV -->
+		<source th:if="${videoName.endsWith('.mkv')}"
+			th:src="@{'/' + ${videoDirName} + ${videoName}}">
+
+		<!-- MP4 -->
+		<source th:if="${videoName.endsWith('.mp4')}"
+			th:src="@{'/' + ${videoDirName} + ${videoName}}">
+
+		<track label="Korean" kind="subtitles" srclang="ko"
+			th:src="@{'/' + ${videoDirName} + ${subName}}" default>
+	</video>
+
+</div>
+
+</html>
