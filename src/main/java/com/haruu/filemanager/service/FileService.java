@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import groovy.lang.Tuple2;
+import com.haruu.filemanager.model.FileInfo;
+import com.haruu.filemanager.util.Common;
+import com.haruu.filemanager.util.SubtitleConverter;
 
 @Service
 public class FileService {
@@ -40,6 +42,7 @@ public class FileService {
 	}
 
 	private boolean isUnSafe(String filename) {
+		// /.. or ../ or \.. or ..\
 		return Pattern.compile("/(\\/\\.\\.)|(\\.\\.\\/)|(\\\\\\.\\.)|(\\.\\.\\\\)/").matcher(filename).matches();
 	}
 
@@ -65,24 +68,39 @@ public class FileService {
 	}
 
 	// 파일정보 조회
-	public List<Tuple2<String, Long>> getFileInfoList(File[] files) {
-		List<Tuple2<String, Long>> fileInfoList = new ArrayList<>();
+	public List<FileInfo> getFileInfoList(File[] files) {
+		List<FileInfo> fileInfoList = new ArrayList<>();
 		for (File file : files) {
 			if (file.length() == 0 || file.isDirectory()) continue;
-			Tuple2<String, Long> fileInfo = new Tuple2<>(file.getName(), file.length() / 1024);
+			FileInfo fileInfo = new FileInfo(
+					file.getName(),
+					Common.rawUrlEncode(file.getName()),
+					file.length() / 1024,
+					file.getName().matches(".*(\\.mp3)"));
 			fileInfoList.add(fileInfo);
 		}
 		return fileInfoList;
 	}
 	
-	public List<Tuple2<String, Long>> getVideoInfoList(File[] files) {
-		List<Tuple2<String, Long>> videoInfoList = new ArrayList<>();
+	public List<FileInfo> getVideoInfoList(File[] files) {
+		List<FileInfo> videoInfoList = new ArrayList<>();
 		for (File file : files) {
 			if (file.length() == 0 || file.isDirectory() || file.getName().matches(".*((\\.smi)|(\\.srt)|(\\.vtt))")) continue;
-			Tuple2<String, Long> fileInfo = new Tuple2<>(file.getName(), file.length() / 1024);
+			FileInfo fileInfo = new FileInfo(
+					file.getName(),
+					Common.rawUrlEncode(file.getName()),
+					file.length() / 1024,
+					true);
 			videoInfoList.add(fileInfo);
 		}
 		return videoInfoList;
+	}
+
+	/* create */
+	public void convertSubtitle(int safe, String subName) {
+		String rootDirName = (safe != 1) ? DIR_NAME : SAFE_DIR_NAME;
+		String realPath = context.getRealPath("/") + rootDirName + VIDEOS;
+		SubtitleConverter.convertSmiToVtt(realPath, subName);
 	}
 
 }

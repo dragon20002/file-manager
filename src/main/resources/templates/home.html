@@ -52,18 +52,18 @@
 		</thead>
 		<tbody>
 			<tr style="text-align: center" th:each="fileInfo : ${fileInfoList}">
-				<td style="padding: 5px 50px 5px 50px" th:text="${fileInfo.getFirst()}"></td>
-				<td style="padding: 5px 50px 5px 50px" th:text="|${fileInfo.getSecond()} KB|"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="${fileInfo.getName()}"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="|${fileInfo.getSize()} KB|"></td>
 				<td style="padding: 5px 50px 5px 50px">
-					<a th:href="@{${dirName} + ${fileInfo.getFirst()}}" download>다운로드</a>
+					<a th:href="@{${dirName} + ${fileInfo.getEncName()}}" download>다운로드</a>
 				</td>
 			</tr>
 
 			<tr style="text-align: center" th:each="fileInfo : ${safeFileInfoList}">
-				<td style="padding: 5px 50px 5px 50px" th:text="${fileInfo.getFirst()}"></td>
-				<td style="padding: 5px 50px 5px 50px" th:text="|${fileInfo.getSecond()} KB|"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="${fileInfo.getName()}"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="|${fileInfo.getSize()} KB|"></td>
 				<td style="padding: 5px 50px 5px 50px">
-					<a th:href="@{${safeDirName} + ${fileInfo.getFirst()}}" download>다운로드</a>
+					<a th:href="@{${safeDirName} + ${fileInfo.getEncName()}}" download>다운로드</a>
 				</td>
 			</tr>
 		</tbody>
@@ -80,17 +80,17 @@
 		</thead>
 		<tbody>
 			<tr style="text-align: center" th:each="videoInfo : ${videoInfoList}">
-				<td style="padding: 5px 50px 5px 50px" th:text="${videoInfo.getFirst()}"></td>
-				<td style="padding: 5px 50px 5px 50px" th:text="|${videoInfo.getSecond()} KB|"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="${videoInfo.getName()}"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="|${videoInfo.getSize()} KB|"></td>
 				<td style="padding: 5px 50px 5px 50px">
-					<a th:href="@{'videos/n/' + ${videoInfo.getFirst()}}">재생</a>
+					<a th:href="@{videos/n/(name=${videoInfo.getName()})}">재생</a>
 				</td>
 			</tr>
 			<tr style="text-align: center" th:each="safeVideoInfo : ${safeVideoInfoList}">
-				<td style="padding: 5px 50px 5px 50px" th:text="${safeVideoInfo.getFirst()}"></td>
-				<td style="padding: 5px 50px 5px 50px" th:text="|${safeVideoInfo.getSecond()} KB|"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="${safeVideoInfo.getName()}"></td>
+				<td style="padding: 5px 50px 5px 50px" th:text="|${safeVideoInfo.getSize()} KB|"></td>
 				<td style="padding: 5px 50px 5px 50px">
-					<a th:href="@{'videos/s/' + ${safeVideoInfo.getFirst()}}">재생</a>
+					<a th:href="@{videos/s/(name=${safeVideoInfo.getName()})}">재생</a>
 				</td>
 			</tr>
 		</tbody>

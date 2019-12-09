@@ -38,6 +38,11 @@
 			<groupId>nz.net.ultraq.thymeleaf</groupId>
 			<artifactId>thymeleaf-layout-dialect</artifactId>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.thymeleaf.extras/thymeleaf-extras-springsecurity5 -->
+		<dependency>
+		    <groupId>org.thymeleaf.extras</groupId>
+		    <artifactId>thymeleaf-extras-springsecurity5</artifactId>
+		</dependency>
 
 
 		<dependency>
@@ -46,10 +51,7 @@
 			<scope>test</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-		</dependency>
+		
 	</dependencies>
 
 	<build>

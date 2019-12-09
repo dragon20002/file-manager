@@ -1,11 +1,22 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <header th:fragment="headerFragment">
 
 	<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
 		<a class="navbar-brand" th:href="@{/}">Home</a>
+
+		<ul class="nav navbar-nav ml-auto"><!-- ml-auto: 오른쪽 정렬 -->
+			<li sec:authorize="isAuthenticated()">
+				<a href="javascript:document.getElementById('logout').submit();">
+					<i class="fas fa-sign-out-alt fa-lg" style="color: white"></i>
+				</a>
+			</li>
+		</ul>
 	</nav>
+
+	<form id="logout" th:action="@{/logout}" method="POST"></form>
 
 </header>
 

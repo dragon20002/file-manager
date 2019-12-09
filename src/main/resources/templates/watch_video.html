@@ -22,7 +22,7 @@
 
 <th:block layout:fragment="script">
 <script>
-function failed(e) {
+function onVideoError(e) {
   // video playback failed - show a message saying why
   switch (e.target.error.code) {
     case e.target.error.MEDIA_ERR_ABORTED:
@@ -52,14 +52,14 @@ function failed(e) {
 	
 	<hr>
 
-	<video width=100% controls onerror="failed(event)">
+	<video width=100% controls onerror="onVideoError(event)">
 		<!-- MKV -->
 		<source th:if="${videoName.endsWith('.mkv')}"
-			th:src="@{'/' + ${videoDirName} + ${videoName}}">
+			th:src="@{'/' + ${videoDirName} + ${encVideoName}}">
 
 		<!-- MP4 -->
 		<source th:if="${videoName.endsWith('.mp4')}"
-			th:src="@{'/' + ${videoDirName} + ${videoName}}">
+			th:src="@{'/' + ${videoDirName} + ${encVideoName}}">
 
 		<track label="Korean" kind="subtitles" srclang="ko"
 			th:src="@{'/' + ${videoDirName} + ${subName}}" default>
