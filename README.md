@@ -1,6 +1,6 @@
 # 드래그로 서버에 파일 업로드
 
-![aa](https://postfiles.pstatic.net/MjAxOTAyMTZfNjYg/MDAxNTUwMjQ2ODMzNTQ3.mAv8TaiyFoFZhJKcP42rTEKQjfnSfVMbHywPI_4P0nkg.wV3_AAZ3F0gY-tf_SNyYXCpAFsJRpKqkzhN6miL0-d4g.PNG.dragon20002/SE-c48279ab-5c8e-4045-8a66-b8f6d7e59c32.png?type=w580)
+![aa](https://postfiles.pstatic.net/MjAxOTA1MTFfMjQ2/MDAxNTU3NTY2NDk3MzE5.6l4H6QyBr5lf55TQqflZ5MdkAxqPv0mEtOsMQMFEMigg.0jFHMrhhYkjd-sL4rsM_LP97d0CYEya4IK7H_Uy1SrAg.PNG.dragon20002/SE-e3cd1eab-848d-4e8c-9511-8eaa49f8420c.png?type=w773)
 
 
 ## Dependencies
@@ -22,71 +22,6 @@
 
 <p>
 
-
-## pom.xml
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.1.2.RELEASE</version>
-		<relativePath /> <!-- lookup parent from repository -->
-	</parent>
-	<groupId>com.haruu</groupId>
-	<artifactId>filemananger</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>file-mananger</name>
-	<description>file manager back-end</description>
-
-	<properties>
-		<java.version>1.8</java.version>
-	</properties>
-
-	<packaging>war</packaging>
-
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>nz.net.ultraq.thymeleaf</groupId>
-			<artifactId>thymeleaf-layout-dialect</artifactId>
-		</dependency>
-
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
-
-</project>
-```
 
 ## Import to Eclipse
 1. Clone&Import this project<br>
