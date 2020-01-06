@@ -11,11 +11,11 @@ import com.haruu.filemanager.service.FileService;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-	
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests()
-				.antMatchers("/" + FileService.SAFE_DIR_NAME + "**").hasRole("ADMIN")
+				.antMatchers("/" + FileService.SAFE_DIR_NAME + "/**").hasRole("ADMIN")
 				.antMatchers("/**").permitAll()
 			.and()
 				.formLogin()

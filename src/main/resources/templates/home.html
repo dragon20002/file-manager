@@ -20,13 +20,107 @@
 </style>
 </th:block>
 
-<th:block layout:fragment="script"></th:block>
+<th:block layout:fragment="script">
+<script>
+	let dest = `api/files`;
+	$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
+		if (xhr.status != 200) return;
+		let fileInfos = data;
+
+		let fileTableBody = $('#file-table').children('tbody');
+		let idx = 0;
+		fileInfos.forEach(fileInfo => {
+			let encFilePath = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
+			let tr = `
+				<tr style="text-align: center">
+				<td style="padding: 5px 5px 5px 5px">${fileInfo.rootDirName}</td>
+					<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
+					<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
+					<td style="padding: 5px 5px 5px 5px">
+						<a href="${encFilePath}" download><i class="fas fa-download"></i></a>
+					</td>
+					<td style="padding: 5px 50px 5px 50px">
+						<a href="javascript:deleteFile('${idx}')"><i class="fas fa-trash-alt" style="color: red"></i></a>
+					</td>
+				</tr>
+			`;
+			fileTableBody.append(tr);
+			idx++;
+		});
+	});
+
+	$('#upload-btn').click(function () {
+		let rootDirName = $('#rootDirName')[0].value;
+		let dest = `api/files/${rootDirName}`;
+		let uploadForm = document.getElementById('upload-form');
+		let body = new FormData(uploadForm);
+		$.ajax({ method: "POST", url: dest, data: body, contentType: false, processData: false }).done(function(data, textStatus, xhr) {
+			if (xhr.status != 201) return;
+			let fileInfos = data;
+
+			let fileTableBody = $('#file-table').children('tbody');
+			let idx = 0;
+			fileInfos.forEach(fileInfo => {
+				let encFilePath = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
+				let tr = `
+					<tr style="text-align: center">
+						<td style="padding: 5px 5px 5px 5px">${fileInfo.rootDirName}</td>
+						<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
+						<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
+						<td style="padding: 5px 5px 5px 5px">
+							<a href="${encFilePath}" download><i class="fas fa-download"></i></a>
+						</td>
+						<td style="padding: 5px 5px 5px 5px">
+							<a href="javascript:deleteFile('${idx}')"><i class="fas fa-trash-alt" style="color: red"></i></a>
+						</td>
+					</tr>
+				`;
+				fileTableBody.append(tr);
+				idx++;
+			});
+
+			// 업로드 폼 비우기
+			$('#upload-form').children('div').children('input')[0].value = "";
+		});
+	});
+
+	const FILE_ROOT_COL = 0;
+	const FILE_NAME_COL = 1;
+	const FILE_SIZE_COL = 2;
+	const FILE_DELT_COL = 3;
+
+	function deleteFile(idx) {
+		if (!confirm("정말로 삭제하시겠습니까?"))
+			return;
+
+		let tr = $('#file-table').children('tbody').children('tr')[idx];
+		let rootDirName = tr.children[FILE_ROOT_COL].innerText;  
+		let fileName = tr.children[FILE_NAME_COL].innerText;
+		
+		let dest = encodeURI(`api/files/${rootDirName}/${fileName}`);
+		let csrfToken = $('#delete-form').children('input')[0].value;
+		$.ajax({ method: "DELETE", url: dest, headers: {'X-CSRF-TOKEN': csrfToken} }).done(function(data, textStatus, xhr) {
+			if (xhr.status != 200) {
+				alert('삭제 권한 없음');
+				return;
+			}
+
+			let fileTableRows = $('#file-table').children('tbody').children('tr');
+			fileTableRows.each(function (idx, tr) {
+				if (tr.children[0].innerText == fileName) {
+					tr.remove();
+				}
+			});
+		});
+	}
+</script>
+</th:block>
 
 <div layout:fragment="content" class="container-fluid">
 	<div style="height: 10px"></div>
 
-	<form th:action="@{/files}" method="post"
-		enctype="multipart/form-data">
+	<form id="upload-form" action="/" method="post" enctype="multipart/form-data">
+		<input type="hidden" th:name="${_csrf.getParameterName()}" th:value="${_csrf.getToken()}">
 
 		<div class="form-group upload-box">
 			<input type="file" class="upload-box-input" id="file" name="files"
@@ -35,65 +129,26 @@
 			<label class="upload-box-label" for="file">파일을 드래그해서 놓아주세요!</label>
 		</div>
 
-		<div class="form-group text-center">
-			<button type="submit" class="btn btn-primary">올리기</button>
-		</div>
+	</form>
 
+	<div class="form-group text-center">
+		<button id="upload-btn" type="button" class="btn btn-primary">올리기</button>
+		<input id="rootDirName" type="hidden" th:value="${rootDirName}">
+	</div>
+
+	<form id="delete-form" action="/" method="post" enctype="multipart/form-data" style="display: none">
+		<input type="hidden" th:name="${_csrf.getParameterName()}" th:value="${_csrf.getToken()}">
 	</form>
 
 	<hr>
 
 	<h4>파일</h4>
 
-	<table class="table-striped" th:if="${fileInfoList.size()} > 0 OR
-			( ${safeFileInfoList != null} AND ${safeFileInfoList.size()} > 0 )">
+	<table id="file-table" class="table-responsive table-striped">
 		<thead>
-			<tr style="text-align: center"><th>파일명</th><th>크기</th><th></th></tr>
+			<tr style="text-align: center"><th>그룹</th><th>파일명</th><th>크기</th><th></th><th></th>
 		</thead>
-		<tbody>
-			<tr style="text-align: center" th:each="fileInfo : ${fileInfoList}">
-				<td style="padding: 5px 50px 5px 50px" th:text="${fileInfo.getName()}"></td>
-				<td style="padding: 5px 50px 5px 50px" th:text="|${fileInfo.getSize()} KB|"></td>
-				<td style="padding: 5px 50px 5px 50px">
-					<a th:href="@{${dirName} + ${fileInfo.getEncName()}}" download>다운로드</a>
-				</td>
-			</tr>
-
-			<tr style="text-align: center" th:each="fileInfo : ${safeFileInfoList}">
-				<td style="padding: 5px 50px 5px 50px" th:text="${fileInfo.getName()}"></td>
-				<td style="padding: 5px 50px 5px 50px" th:text="|${fileInfo.getSize()} KB|"></td>
-				<td style="padding: 5px 50px 5px 50px">
-					<a th:href="@{${safeDirName} + ${fileInfo.getEncName()}}" download>다운로드</a>
-				</td>
-			</tr>
-		</tbody>
-	</table>
-
-	<hr>
-
-	<h4>영화</h4>
-
-	<table class="table-striped" th:if="${videoInfoList.size()} > 0 OR
-			( ${safeVideoInfoList != null} AND ${safeVideoInfoList.size()} > 0 )">
-		<thead>
-			<tr style="text-align: center"><th>파일명</th><th>크기</th><th></th></tr>
-		</thead>
-		<tbody>
-			<tr style="text-align: center" th:each="videoInfo : ${videoInfoList}">
-				<td style="padding: 5px 50px 5px 50px" th:text="${videoInfo.getName()}"></td>
-				<td style="padding: 5px 50px 5px 50px" th:text="|${videoInfo.getSize()} KB|"></td>
-				<td style="padding: 5px 50px 5px 50px">
-					<a th:href="@{videos/n/(name=${videoInfo.getName()})}">재생</a>
-				</td>
-			</tr>
-			<tr style="text-align: center" th:each="safeVideoInfo : ${safeVideoInfoList}">
-				<td style="padding: 5px 50px 5px 50px" th:text="${safeVideoInfo.getName()}"></td>
-				<td style="padding: 5px 50px 5px 50px" th:text="|${safeVideoInfo.getSize()} KB|"></td>
-				<td style="padding: 5px 50px 5px 50px">
-					<a th:href="@{videos/s/(name=${safeVideoInfo.getName()})}">재생</a>
-				</td>
-			</tr>
-		</tbody>
+		<tbody></tbody>
 	</table>
 
 </div>

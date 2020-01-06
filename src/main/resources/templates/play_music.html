@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorator="~{layout/index}">
+
+<th:block layout:fragment="css"></th:block>
+
+<th:block layout:fragment="script">
+<script>
+	let dest = `api/mp3-files`;
+	$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
+		if (xhr.status != 200) return;
+		let fileInfos = data;
+
+		let fileTableBody = $('#file-table').children('tbody');
+		let idx = 0;
+		fileInfos.forEach(fileInfo => {
+			let tr = `
+				<tr style="text-align: center">
+					<td style="padding: 5px 5px 5px 5px">${fileInfo.rootDirName}</td>
+					<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
+					<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
+					<td style="padding: 5px 5px 5px 5px">
+						<a href="javascript:play('${idx}')"><i class="fas fa-play"></i></a>
+					</td>
+				</tr>
+			`;
+			fileTableBody.append(tr);
+			idx++;
+		});
+
+	});
+
+	const MP3_ROOT_COL = 0;
+	const MP3_NAME_COL = 1;
+	const MP3_SIZE_COL = 2;
+	const MP3_PLAY_COL = 3;
+
+	function play(idx) {
+		let tr = $('#file-table').children('tbody').children('tr')[idx];
+		let rootDirName = tr.children[MP3_ROOT_COL].innerText;  
+		let fileName = tr.children[MP3_NAME_COL].innerText;
+
+		// Request MP3
+		let dest = encodeURI(`api/mp3-files/${rootDirName}/${fileName}`);
+		$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
+			if (xhr.status != 200) return;
+			let fileInfo = data;
+
+			// title
+			let musicName = $('#music-name');
+			musicName.text(fileInfo.name);
+	
+			// audio tag
+			let audio = $('#audio');
+	
+			let audioSrc = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
+			audio.find('source').attr('src', audioSrc);
+	
+			audio[0].load();
+			audio[0].play();
+			
+			// table
+			let mp3TableRows = $('#file-table').children('tbody').children('tr');
+			mp3TableRows.each(function (idx, tr) {
+				let trColor;
+				let playIcon;
+				if (tr.children[MP3_NAME_COL].innerText == fileName) {
+					trColor = 'dodgerblue';
+					playIcon = '';
+				} else {
+					trColor = 'black';
+					playIcon = `<i class="fas fa-play"></i>`;
+				}
+				tr.style.color = trColor;
+				tr.children[MP3_PLAY_COL].children[0].innerHTML = playIcon;
+			});
+
+		}); //mp3-file ajax, done
+
+		// Request ID3v2
+		dest = encodeURI(`api/mp3-files/${rootDirName}/${fileName}/id3`);
+		$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
+			if (xhr.status != 200) return;
+			let id3 = data;
+
+			// album image
+			let img = $('#album-image');
+	
+			let imgSrc = encodeURI(`${rootDirName}/${fileName}`);
+			imgSrc = imgSrc.substring(0, imgSrc.lastIndexOf('.')) + ".png";
+			img.attr('src', imgSrc);
+	
+			// id3
+			let id3Ul = $('#id3');
+			id3Ul.children('li').each(function(idx, li) {
+				li.remove();
+			});
+			if (id3.title != null)
+				id3Ul.append(`<li>제목: ${id3.title}</li>`);
+			if (id3.artist != null)
+				id3Ul.append(`<li>가수: ${id3.artist}</li>`);
+			if (id3.album != null)
+				id3Ul.append(`<li>앨범: ${id3.album}</li>`);
+			if (id3.year != null)
+				id3Ul.append(`<li>연도: ${id3.year}</li>`);
+			if (id3.genreDescription != null)
+				id3Ul.append(`<li>장르: ${id3.genreDescription}</li>`);
+			id3Ul.append(lis);
+
+		}); //id3v2 ajax, done
+	}
+
+</script>
+</th:block>
+
+<div layout:fragment="content" class="container-fluid">
+	<div style="height: 10px"></div>
+
+	<h4 id="music-name"></h4>
+
+	<hr>
+	
+	<img id="album-image" alt="" width="250px">
+
+	<ul id="id3">
+	</ul>
+
+	<audio id="audio" controls>
+		<source src="">
+	</audio>
+
+	<hr>
+
+	<h4>재생 목록</h4>
+
+	<table id="file-table" class="table-responsive table-striped">
+		<thead>
+			<tr style="text-align: center"><th>그룹</th><th>파일명</th><th>크기</th><th></th>
+		</thead>
+		<tbody></tbody>
+	</table>
+
+</div>
+
+</html>

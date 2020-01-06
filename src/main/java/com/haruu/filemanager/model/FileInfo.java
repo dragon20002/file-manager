@@ -1,23 +1,19 @@
 package com.haruu.filemanager.model;
 
 public class FileInfo {
-
 	private String name;
-
-	private String encName;
 
 	private long size;
 
-	private boolean playable;
+	private String rootDirName;
 
 	public FileInfo() {
 	}
 
-	public FileInfo(String name, String encName, long size, boolean playable) {
+	public FileInfo(String name, long size, String rootDirName) {
 		this.name = name;
-		this.encName = encName;
 		this.size = size;
-		this.playable = playable;
+		this.rootDirName = rootDirName;
 	}
 
 	public String getName() {
@@ -28,14 +24,6 @@ public class FileInfo {
 		this.name = name;
 	}
 
-	public String getEncName() {
-		return encName;
-	}
-
-	public void setEncName(String encName) {
-		this.encName = encName;
-	}
-
 	public long getSize() {
 		return size;
 	}
@@ -44,12 +32,12 @@ public class FileInfo {
 		this.size = size;
 	}
 
-	public boolean isPlayable() {
-		return playable;
+	public String getRootDirName() {
+		return rootDirName;
 	}
 
-	public void setPlayable(boolean playable) {
-		this.playable = playable;
+	public void setRootDirName(String rootDirName) {
+		this.rootDirName = rootDirName;
 	}
 
 }
