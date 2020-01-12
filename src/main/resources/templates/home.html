@@ -22,31 +22,21 @@
 
 <th:block layout:fragment="script">
 <script>
+	const FILE_ROOT_COL = 0;
+	const FILE_NAME_COL = 1;
+	const FILE_SIZE_COL = 2;
+	const FILE_DELT_COL = 3;
+
+	const fileTableBody = $('#file-table').children('tbody');
+	const filePathIdx = {}; //{ idx: filePath }, 파일삭제할 때 테이블 행 제거를 위한 파일경로 인덱스
+
 	let dest = `api/files`;
 	$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
 		if (xhr.status != 200) return;
 		let fileInfos = data;
 
-		let fileTableBody = $('#file-table').children('tbody');
-		let idx = 0;
-		fileInfos.forEach(fileInfo => {
-			let encFilePath = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
-			let tr = `
-				<tr style="text-align: center">
-				<td style="padding: 5px 5px 5px 5px">${fileInfo.rootDirName}</td>
-					<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
-					<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
-					<td style="padding: 5px 5px 5px 5px">
-						<a href="${encFilePath}" download><i class="fas fa-download"></i></a>
-					</td>
-					<td style="padding: 5px 50px 5px 50px">
-						<a href="javascript:deleteFile('${idx}')"><i class="fas fa-trash-alt" style="color: red"></i></a>
-					</td>
-				</tr>
-			`;
-			fileTableBody.append(tr);
-			idx++;
-		});
+		// 파일 목록 추가
+		appendFiles(fileInfos);
 	});
 
 	$('#upload-btn').click(function () {
@@ -58,46 +48,43 @@
 			if (xhr.status != 201) return;
 			let fileInfos = data;
 
-			let fileTableBody = $('#file-table').children('tbody');
-			let idx = 0;
-			fileInfos.forEach(fileInfo => {
-				let encFilePath = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
-				let tr = `
-					<tr style="text-align: center">
-						<td style="padding: 5px 5px 5px 5px">${fileInfo.rootDirName}</td>
-						<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
-						<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
-						<td style="padding: 5px 5px 5px 5px">
-							<a href="${encFilePath}" download><i class="fas fa-download"></i></a>
-						</td>
-						<td style="padding: 5px 5px 5px 5px">
-							<a href="javascript:deleteFile('${idx}')"><i class="fas fa-trash-alt" style="color: red"></i></a>
-						</td>
-					</tr>
-				`;
-				fileTableBody.append(tr);
-				idx++;
-			});
+			// 파일 목록 추가
+			appendFiles(fileInfos);
 
 			// 업로드 폼 비우기
 			$('#upload-form').children('div').children('input')[0].value = "";
 		});
 	});
 
-	const FILE_ROOT_COL = 0;
-	const FILE_NAME_COL = 1;
-	const FILE_SIZE_COL = 2;
-	const FILE_DELT_COL = 3;
+	function appendFiles(fileInfos) {
+		let idx = 0;
+		fileInfos.forEach(fileInfo => {
+			let encFilePath = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
+			let tr = `
+				<tr style="text-align: center">
+					<td style="padding: 5px 5px 5px 5px">${fileInfo.rootDirName}</td>
+					<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
+					<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
+					<td style="padding: 5px 5px 5px 5px">
+						<a href="${encFilePath}" download><i class="fas fa-download"></i></a>
+					</td>
+					<td style="padding: 5px 5px 5px 5px">
+						<a href="javascript:deleteFile(${idx})"><i class="fas fa-trash-alt" style="color: red"></i></a>
+					</td>
+				</tr>
+			`;
+			fileTableBody.append(tr);
+			filePathIdx[idx] = `${fileInfo.rootDirName}/${fileInfo.name}`;
+			idx++;
+		});
+	}
 
 	function deleteFile(idx) {
-		if (!confirm("정말로 삭제하시겠습니까?"))
+		let filePath = filePathIdx[idx];
+		if (filePath == undefined || !confirm("정말로 삭제하시겠습니까?"))
 			return;
 
-		let tr = $('#file-table').children('tbody').children('tr')[idx];
-		let rootDirName = tr.children[FILE_ROOT_COL].innerText;  
-		let fileName = tr.children[FILE_NAME_COL].innerText;
-		
-		let dest = encodeURI(`api/files/${rootDirName}/${fileName}`);
+		let dest = encodeURI(`api/files/${filePath}`);
 		let csrfToken = $('#delete-form').children('input')[0].value;
 		$.ajax({ method: "DELETE", url: dest, headers: {'X-CSRF-TOKEN': csrfToken} }).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) {
@@ -105,12 +92,16 @@
 				return;
 			}
 
-			let fileTableRows = $('#file-table').children('tbody').children('tr');
-			fileTableRows.each(function (idx, tr) {
-				if (tr.children[0].innerText == fileName) {
+			let fileTableRows = fileTableBody.children('tr');
+			for (let i = 0; i < fileTableRows.length; i++) {
+				let tr = fileTableRows[i];
+				if (tr.children[FILE_ROOT_COL].innerText + "/" +
+						tr.children[FILE_NAME_COL].innerText == filePath) {
 					tr.remove();
+					break;
 				}
-			});
+			}
+			filePathIdx[idx] = undefined;
 		});
 	}
 </script>
