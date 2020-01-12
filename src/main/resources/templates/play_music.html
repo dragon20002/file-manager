@@ -7,12 +7,25 @@
 
 <th:block layout:fragment="script">
 <script>
+	const MP3_ROOT_COL = 0;
+	const MP3_NAME_COL = 1;
+	const MP3_SIZE_COL = 2;
+	const MP3_PLAY_COL = 3;
+	
+	const titleH4 = $('#music-name');
+	const audio = $('#audio');
+	const fileTableBody = $('#file-table').children('tbody');
+	let curPlayIdx = 0;
+	
+	audio[0].onended = function() {
+		play(curPlayIdx + 1);
+	};
+
 	let dest = `api/mp3-files`;
 	$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
 		if (xhr.status != 200) return;
 		let fileInfos = data;
 
-		let fileTableBody = $('#file-table').children('tbody');
 		let idx = 0;
 		fileInfos.forEach(fileInfo => {
 			let tr = `
@@ -21,7 +34,7 @@
 					<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
 					<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
 					<td style="padding: 5px 5px 5px 5px">
-						<a href="javascript:play('${idx}')"><i class="fas fa-play"></i></a>
+						<a href="javascript:play(${idx})"><i class="fas fa-play"></i></a>
 					</td>
 				</tr>
 			`;
@@ -31,13 +44,10 @@
 
 	});
 
-	const MP3_ROOT_COL = 0;
-	const MP3_NAME_COL = 1;
-	const MP3_SIZE_COL = 2;
-	const MP3_PLAY_COL = 3;
-
 	function play(idx) {
-		let tr = $('#file-table').children('tbody').children('tr')[idx];
+		let tr = fileTableBody.children('tr')[idx];
+		if (tr == undefined) return;
+
 		let rootDirName = tr.children[MP3_ROOT_COL].innerText;  
 		let fileName = tr.children[MP3_NAME_COL].innerText;
 
@@ -48,34 +58,29 @@
 			let fileInfo = data;
 
 			// title
-			let musicName = $('#music-name');
-			musicName.text(fileInfo.name);
+			titleH4.text(fileInfo.name);
 	
 			// audio tag
-			let audio = $('#audio');
-	
 			let audioSrc = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
 			audio.find('source').attr('src', audioSrc);
 	
 			audio[0].load();
 			audio[0].play();
-			
-			// table
-			let mp3TableRows = $('#file-table').children('tbody').children('tr');
-			mp3TableRows.each(function (idx, tr) {
-				let trColor;
-				let playIcon;
-				if (tr.children[MP3_NAME_COL].innerText == fileName) {
-					trColor = 'dodgerblue';
-					playIcon = '';
-				} else {
-					trColor = 'black';
-					playIcon = `<i class="fas fa-play"></i>`;
-				}
-				tr.style.color = trColor;
-				tr.children[MP3_PLAY_COL].children[0].innerHTML = playIcon;
-			});
 
+			// file-table tr
+			let prevTr = fileTableBody.children('tr').eq(curPlayIdx);
+			if (prevTr != undefined) {
+				prevTr.css('color', 'black');
+				prevTr.find('td').eq(MP3_PLAY_COL).find('a').append('<i class="fas fa-play"></i>');
+			}
+
+			let curTr = fileTableBody.children('tr').eq(idx);
+			if (curTr != undefined) {
+				curTr.css('color', 'dodgerblue');
+				curTr.find('i').remove();
+			}
+
+			curPlayIdx = idx;
 		}); //mp3-file ajax, done
 
 		// Request ID3v2
@@ -106,7 +111,6 @@
 				id3Ul.append(`<li>연도: ${id3.year}</li>`);
 			if (id3.genreDescription != null)
 				id3Ul.append(`<li>장르: ${id3.genreDescription}</li>`);
-			id3Ul.append(lis);
 
 		}); //id3v2 ajax, done
 	}
