@@ -21,23 +21,51 @@
 		play(curPlayIdx + 1);
 	};
 
-	let dest = `api/mp3-files`;
+	let dest = 'api/mp3-files';
 	$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
 		if (xhr.status != 200) return;
 		let fileInfos = data;
 
 		let idx = 0;
-		fileInfos.forEach(fileInfo => {
-			let tr = `
-				<tr style="text-align: center">
-					<td style="padding: 5px 5px 5px 5px">${fileInfo.rootDirName}</td>
-					<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
-					<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
-					<td style="padding: 5px 5px 5px 5px">
-						<a href="javascript:play(${idx})"><i class="fas fa-play"></i></a>
-					</td>
-				</tr>
-			`;
+		fileInfos.forEach(function(fileInfo) {
+
+			// Row
+			let tr = document.createElement("tr");
+			tr.style.textAlign = "center";
+			
+			// Col 0 : root dir-name
+			let rootDirNameTd = document.createElement("td");
+			rootDirNameTd.style.padding = "5px 5px 5px 5px";
+			rootDirNameTd.innerText = fileInfo.rootDirName;
+
+			tr.appendChild(rootDirNameTd);
+			
+			// Col 1 : name
+			let nameTd = document.createElement("td");
+			nameTd.style.padding = "5px 5px 5px 5px";
+			nameTd.innerText = fileInfo.name;
+			
+			tr.appendChild(nameTd);
+			
+			// Col 2 : size
+			let sizeTd = document.createElement("td");
+			sizeTd.style.padding = "5px 5px 5px 5px";
+			sizeTd.innerText = fileInfo.size + " KB";
+
+			tr.appendChild(sizeTd);
+			
+			// Col 3 : play button
+			let playTd = document.createElement("td");
+			playTd.style.padding = "5px 5px 5px 5px";
+	
+			let playA = document.createElement("a");
+			playA.href = "javascript:play(" + idx + ")";
+			playA.innerHTML = '<i class="fas fa-play"></i>';
+
+			playTd.appendChild(playA);
+
+			tr.appendChild(playTd);
+			
 			fileTableBody.append(tr);
 			idx++;
 		});
@@ -52,7 +80,7 @@
 		let fileName = tr.children[MP3_NAME_COL].innerText;
 
 		// Request MP3
-		let dest = encodeURI(`api/mp3-files/${rootDirName}/${fileName}`);
+		let dest = encodeURI('api/mp3-files/' + rootDirName + '/' + fileName);
 		$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) return;
 			let fileInfo = data;
@@ -61,7 +89,7 @@
 			titleH4.text(fileInfo.name);
 	
 			// audio tag
-			let audioSrc = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
+			let audioSrc = encodeURI(fileInfo.rootDirName + '/' + fileInfo.name);
 			audio.find('source').attr('src', audioSrc);
 	
 			audio[0].load();
@@ -84,7 +112,7 @@
 		}); //mp3-file ajax, done
 
 		// Request ID3v2
-		dest = encodeURI(`api/mp3-files/${rootDirName}/${fileName}/id3`);
+		dest = encodeURI('api/mp3-files/' + rootDirName + '/' + fileName + '/id3');
 		$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) return;
 			let id3 = data;
@@ -92,7 +120,7 @@
 			// album image
 			let img = $('#album-image');
 	
-			let imgSrc = encodeURI(`${rootDirName}/${fileName}`);
+			let imgSrc = encodeURI(rootDirName + '/' + fileName);
 			imgSrc = imgSrc.substring(0, imgSrc.lastIndexOf('.')) + ".png";
 			img.attr('src', imgSrc);
 	
@@ -102,15 +130,15 @@
 				li.remove();
 			});
 			if (id3.title != null)
-				id3Ul.append(`<li>제목: ${id3.title}</li>`);
+				id3Ul.append('<li>제목: ' + id3.title + '</li>');
 			if (id3.artist != null)
-				id3Ul.append(`<li>가수: ${id3.artist}</li>`);
+				id3Ul.append('<li>가수: ' + id3.artist + '</li>');
 			if (id3.album != null)
-				id3Ul.append(`<li>앨범: ${id3.album}</li>`);
+				id3Ul.append('<li>앨범: ' + id3.album + '</li>');
 			if (id3.year != null)
-				id3Ul.append(`<li>연도: ${id3.year}</li>`);
+				id3Ul.append('<li>연도: ' + id3.year + '</li>');
 			if (id3.genreDescription != null)
-				id3Ul.append(`<li>장르: ${id3.genreDescription}</li>`);
+				id3Ul.append('<li>장르: ' + id3.genreDescription + '</li>');
 
 		}); //id3v2 ajax, done
 	}

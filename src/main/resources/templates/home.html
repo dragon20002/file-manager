@@ -30,7 +30,7 @@
 	const fileTableBody = $('#file-table').children('tbody');
 	const filePathIdx = {}; //{ idx: filePath }, 파일삭제할 때 테이블 행 제거를 위한 파일경로 인덱스
 
-	let dest = `api/files`;
+	let dest = 'api/files';
 	$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
 		if (xhr.status != 200) return;
 		let fileInfos = data;
@@ -41,7 +41,7 @@
 
 	$('#upload-btn').click(function () {
 		let rootDirName = $('#rootDirName')[0].value;
-		let dest = `api/files/${rootDirName}`;
+		let dest = 'api/files/' + rootDirName;
 		let uploadForm = document.getElementById('upload-form');
 		let body = new FormData(uploadForm);
 		$.ajax({ method: "POST", url: dest, data: body, contentType: false, processData: false }).done(function(data, textStatus, xhr) {
@@ -58,23 +58,61 @@
 
 	function appendFiles(fileInfos) {
 		let idx = 0;
-		fileInfos.forEach(fileInfo => {
-			let encFilePath = encodeURI(`${fileInfo.rootDirName}/${fileInfo.name}`);
-			let tr = `
-				<tr style="text-align: center">
-					<td style="padding: 5px 5px 5px 5px">${fileInfo.rootDirName}</td>
-					<td style="padding: 5px 5px 5px 5px">${fileInfo.name}</td>
-					<td style="padding: 5px 5px 5px 5px">${fileInfo.size} KB</td>
-					<td style="padding: 5px 5px 5px 5px">
-						<a href="${encFilePath}" download><i class="fas fa-download"></i></a>
-					</td>
-					<td style="padding: 5px 5px 5px 5px">
-						<a href="javascript:deleteFile(${idx})"><i class="fas fa-trash-alt" style="color: red"></i></a>
-					</td>
-				</tr>
-			`;
+		fileInfos.forEach(function(fileInfo) {
+			let encFilePath = encodeURI(fileInfo.rootDirName + '/' + fileInfo.name);
+
+			// Row
+			let tr = document.createElement("tr");
+			tr.style.textAlign = "center";
+
+			// Col 0 : root dir-name
+			let rootDirNameTd = document.createElement("td");
+			rootDirNameTd.style.padding = "5px 5px 5px 5px";
+			rootDirNameTd.innerText = fileInfo.rootDirName;
+
+			tr.appendChild(rootDirNameTd);
+			
+			// Col 1 : name
+			let nameTd = document.createElement("td");
+			nameTd.style.padding = "5px 5px 5px 5px";
+			nameTd.innerText = fileInfo.name;
+			
+			tr.appendChild(nameTd);
+			
+			// Col 2 : size
+			let sizeTd = document.createElement("td");
+			sizeTd.style.padding = "5px 5px 5px 5px";
+			sizeTd.innerText = fileInfo.size + " KB";
+
+			tr.appendChild(sizeTd);
+			
+			// Col 3 : download button
+			let downloadTd = document.createElement("td");
+			downloadTd.style.padding = "5px 5px 5px 5px";
+	
+			let downloadA = document.createElement("a");
+			downloadA.href = encFilePath;
+			downloadA.setAttribute('download', fileInfo.name);
+			downloadA.innerHTML = '<i class="fas fa-download"></i>';
+
+			downloadTd.appendChild(downloadA);
+
+			tr.appendChild(downloadTd);
+
+			// Col 4 : delete button
+			let deleteTd = document.createElement("td");
+			deleteTd.style.padding = "5px 5px 5px 5px";
+	
+			let deleteA = document.createElement("a");
+			deleteA.href = "javascript:deleteFile(" + idx + ")";
+			deleteA.innerHTML = '<i class="fas fa-trash-alt" style="color: red"></i>';
+
+			deleteTd.appendChild(deleteA);
+
+			tr.appendChild(deleteTd);
+			
 			fileTableBody.append(tr);
-			filePathIdx[idx] = `${fileInfo.rootDirName}/${fileInfo.name}`;
+			filePathIdx[idx] = fileInfo.rootDirName + '/' + fileInfo.name;
 			idx++;
 		});
 	}
@@ -84,7 +122,7 @@
 		if (filePath == undefined || !confirm("정말로 삭제하시겠습니까?"))
 			return;
 
-		let dest = encodeURI(`api/files/${filePath}`);
+		let dest = encodeURI('api/files/' + filePath);
 		let csrfToken = $('#delete-form').children('input')[0].value;
 		$.ajax({ method: "DELETE", url: dest, headers: {'X-CSRF-TOKEN': csrfToken} }).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) {

@@ -40,4 +40,9 @@ public class FileInfo {
 		this.rootDirName = rootDirName;
 	}
 
+	@Override
+	public String toString() {
+		return "FileInfo [name=" + name + ", size=" + size + ", rootDirName=" + rootDirName + "]";
+	}
+
 }
