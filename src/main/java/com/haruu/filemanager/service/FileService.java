@@ -91,9 +91,14 @@ public class FileService {
 			if (mpFile == null || mpFile.isEmpty() || Common.isUnSafe(mpFile.getOriginalFilename()))
 				continue;
 
+			// 중복확인
+			FileInfo fileInfo = findOne(rootDirName, dirPath, mpFile.getOriginalFilename());
+			if (fileInfo != null)
+				continue;
+
 			try {
 				File file = Common.save(mpFile, realDirPath);
-				FileInfo fileInfo = Common.getFileInfo(file);
+				fileInfo = Common.getFileInfo(file);
 				fileInfos.add(fileInfo);
 			} catch (IOException e) {
 				continue;

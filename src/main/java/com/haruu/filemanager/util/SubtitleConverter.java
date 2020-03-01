@@ -2,8 +2,11 @@ package com.haruu.filemanager.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,13 +21,22 @@ public class SubtitleConverter {
 		long lineNum = 0;
 		Pattern syncTagPtn = Pattern.compile("sync start=[0-9]+");
 		Pattern tsPtn = Pattern.compile("[0-9]+"); //timestamp pattern
+		Pattern pClassPtn = Pattern.compile("<p class=.*>");
 
 		try {
 			vttFile.createNewFile();
-			PrintWriter writer = new PrintWriter(vttFile);
+			PrintWriter writer = new PrintWriter(
+					new OutputStreamWriter(
+							new FileOutputStream(vttFile),
+							"UTF-8")
+					);
 			writer.println("WEBVTT\n\n");
 
-			BufferedReader reader = new BufferedReader(new FileReader(smiFile));
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(
+							new FileInputStream(smiFile),
+							"UTF-8")
+					);
 			String startLine = decode(reader.readLine());
 			while (startLine != null) { //한 줄씩 읽기
 				if (syncTagPtn.matcher(startLine.toLowerCase()).find()) {
@@ -70,7 +82,8 @@ public class SubtitleConverter {
 								.replaceAll("<\\/.+>", "")
 								.replaceAll("<.+>", "");
 
-						if (text.contentEquals("<P CLASS=SUBTTL>")) {
+						Matcher pClassMtr = pClassPtn.matcher(text);
+						if (pClassMtr.find()) {
 							lineNum = linePos;
 							startLine = nextLine;
 							continue;

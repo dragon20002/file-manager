@@ -15,7 +15,7 @@
 	const titleH4 = $('#music-name');
 	const audio = $('#audio');
 	const fileTableBody = $('#file-table').children('tbody');
-	let curPlayIdx = 0;
+	let curPlayIdx = -1;
 	
 	audio[0].onended = function() {
 		play(curPlayIdx + 1);

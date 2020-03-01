@@ -16,7 +16,7 @@
 	const titleH4 = $('#video-name');
 	const video = $('#video');
 	const fileTableBody = $('#file-table').children('tbody');
-	let curPlayIdx = 0;
+	let curPlayIdx = -1;
 
 	video[0].onended = function() {
 		play(curPlayIdx + 1);
@@ -87,6 +87,10 @@
 			let curTr = fileTableBody.children('tr').eq(idx);
 			if (curTr != undefined) {
 				curTr.css('color', 'dodgerblue');
+				let extStartIdx = fileInfo.name.lastIndexOf('.');
+				let noExtFileName = fileInfo.name.substring(0, extStartIdx);
+				let imgSrc = encodeURI(`${fileInfo.rootDirName}/${noExtFileName}.png`);
+				curTr.children('MP4_TNIL_COL').children('img').attr('src', '${imgSrc}');
 				curTr.find('i').remove();
 			}
 			
