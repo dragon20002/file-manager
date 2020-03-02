@@ -1,6 +1,5 @@
 package com.haruu.filemanager.controller;
 
-import java.io.File;
 import java.io.FileFilter;
 import java.util.List;
 
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.haruu.filemanager.model.FileInfo;
 import com.haruu.filemanager.service.FileService;
+import com.haruu.filemanager.util.Common;
 import com.mpatric.mp3agic.ID3v2;
 
 @RestController
@@ -29,7 +29,7 @@ public class Mp3RestController {
 	@GetMapping("/api/mp3-files")
 	public ResponseEntity<List<FileInfo>> getFiles(HttpServletRequest request) {
 		// Mp3 파일정보 목록
-		FileFilter fileFilter = new Mp3FileFilter();
+		FileFilter fileFilter = new Common.Mp3FileFilter();
 		List<FileInfo> fileInfos = fileService.findAll(FileService.DIR_NAME, "", fileFilter);
 		if (request.isUserInRole("ADMIN"))
 			fileInfos.addAll(fileService.findAll(FileService.SAFE_DIR_NAME, "", fileFilter));
@@ -46,7 +46,7 @@ public class Mp3RestController {
 
 		return new ResponseEntity<>(fileInfo, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/api/mp3-files/{rootDirName}/{fileName}/id3")
 	public ResponseEntity<ID3v2> getId3(@PathVariable String rootDirName, @PathVariable String fileName) {
 		ID3v2 id3;
@@ -58,14 +58,6 @@ public class Mp3RestController {
 			log.debug(e.getMessage());
 		}
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-	}
- 
-	class Mp3FileFilter implements FileFilter {
-
-		@Override
-		public boolean accept(File pathname) {
-			return pathname.getName().endsWith(".mp3");
-		}
 	}
 
 }

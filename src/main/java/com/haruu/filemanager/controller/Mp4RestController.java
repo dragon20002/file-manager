@@ -1,6 +1,5 @@
 package com.haruu.filemanager.controller;
 
-import java.io.File;
 import java.io.FileFilter;
 import java.util.List;
 
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.haruu.filemanager.model.FileInfo;
 import com.haruu.filemanager.service.FileService;
+import com.haruu.filemanager.util.Common.Mp4FileFilter;
 
 @RestController
 public class Mp4RestController {
@@ -47,14 +47,6 @@ public class Mp4RestController {
 		fileService.generateThumbnail(rootDirName, "", fileName);
 
 		return new ResponseEntity<>(fileInfo, HttpStatus.OK);
-	}
-
-	class Mp4FileFilter implements FileFilter {
-
-		@Override
-		public boolean accept(File pathname) {
-			return pathname.getName().endsWith(".mp4");
-		}
 	}
 
 }

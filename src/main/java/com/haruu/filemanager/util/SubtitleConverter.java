@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 public class SubtitleConverter {
 	private static Logger log = LoggerFactory.getLogger(SubtitleConverter.class);
 
+	private static String CHAR_SET = "UTF-8";  
+	
 	public static File convertSmiToVtt(File smiFile, File vttFile) {
 		long lineNum = 0;
 		Pattern syncTagPtn = Pattern.compile("sync start=[0-9]+");
@@ -28,14 +30,14 @@ public class SubtitleConverter {
 			PrintWriter writer = new PrintWriter(
 					new OutputStreamWriter(
 							new FileOutputStream(vttFile),
-							"UTF-8")
+							CHAR_SET)
 					);
 			writer.println("WEBVTT\n\n");
 
 			BufferedReader reader = new BufferedReader(
 					new InputStreamReader(
 							new FileInputStream(smiFile),
-							"UTF-8")
+							CHAR_SET)
 					);
 			String startLine = decode(reader.readLine());
 			while (startLine != null) { //한 줄씩 읽기

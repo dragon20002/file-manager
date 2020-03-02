@@ -1,7 +1,10 @@
 package com.haruu.filemanager.util;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.regex.Pattern;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -20,7 +23,25 @@ public class Common {
 		return new FileInfo(
 				file.getName(),
 				file.length() / 1024,
-				rootDirName);
+				rootDirName,
+				encodeURI(file.getName()));
+	}
+
+	/* JS encodeURI */
+	public static String encodeURI(String src) {
+		String dest = null;
+		try {
+			dest = URLEncoder.encode(src, "UTF-8")
+					.replaceAll("\\+", "%20")
+					.replaceAll("\\%21", "!")
+					.replaceAll("\\%27", "'")
+					.replaceAll("\\%28", "(")
+					.replaceAll("\\%29", ")")
+					.replaceAll("\\%7E", "~");
+		} catch (UnsupportedEncodingException e) {
+			dest = src;
+		}
+		return dest;
 	}
 
 	/* Save received file */
@@ -38,4 +59,21 @@ public class Common {
 		return unsafeFilenamePtn.matcher(filename).matches();
 	}
 
+	/* File Filter */
+	public static class Mp3FileFilter implements FileFilter {
+
+		@Override
+		public boolean accept(File pathname) {
+			return pathname.getName().endsWith(".mp3");
+		}
+	}
+
+	public static class Mp4FileFilter implements FileFilter {
+
+		@Override
+		public boolean accept(File pathname) {
+			return pathname.getName().endsWith(".mp4");
+		}
+	}
+	
 }

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorator="~{layout/index}">
+
+<th:block layout:fragment="css"></th:block>
+
+<th:block layout:fragment="script"></th:block>
+
+<div layout:fragment="content" class="container-fluid">
+	<div style="height: 10px"></div>
+
+	<h4 id="video-name"></h4>
+
+	<hr>
+
+	<video id="video" width="100%" controls th:if="${video} != null">
+		<source th:src="@{|/${video.getRootDirName()}/${video.getEncName()}|}">
+		<track label="Korean" kind="subtitles" srclang="ko"
+			th:src="@{|/${video.getRootDirName()}/${trackName}|}" default>
+	</video>
+</div>
+
+</html>

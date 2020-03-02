@@ -6,14 +6,17 @@ public class FileInfo {
 	private long size;
 
 	private String rootDirName;
+	
+	private String encName;
 
 	public FileInfo() {
 	}
 
-	public FileInfo(String name, long size, String rootDirName) {
+	public FileInfo(String name, long size, String rootDirName, String encName) {
 		this.name = name;
 		this.size = size;
 		this.rootDirName = rootDirName;
+		this.encName = encName;
 	}
 
 	public String getName() {
@@ -40,9 +43,18 @@ public class FileInfo {
 		this.rootDirName = rootDirName;
 	}
 
+	public String getEncName() {
+		return encName;
+	}
+
+	public void setEncName(String encName) {
+		this.encName = encName;
+	}
+
 	@Override
 	public String toString() {
-		return "FileInfo [name=" + name + ", size=" + size + ", rootDirName=" + rootDirName + "]";
+		return "FileInfo [name=" + name + ", size=" + size + ", rootDirName=" + rootDirName + ", encName=" + encName
+				+ "]";
 	}
 
 }
