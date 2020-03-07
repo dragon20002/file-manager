@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -81,8 +80,8 @@ public class CharsetDetector {
 
 		CharsetDecoder decoder = Charset.forName(DEFAULT_CHARSET).newDecoder();
 		try {
-			CharBuffer chBuf = decoder.decode(ByteBuffer.wrap(buffer));
-			result = chBuf.toString();
+			decoder.decode(ByteBuffer.wrap(buffer));
+			result = DEFAULT_CHARSET;
 		} catch (CharacterCodingException e) {
 			//EUC-KR
 		}
