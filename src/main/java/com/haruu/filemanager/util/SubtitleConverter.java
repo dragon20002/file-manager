@@ -80,13 +80,14 @@ public class SubtitleConverter {
 
 					// VTT 자막 파일 쓰기
 					if (!text.isEmpty()) {
-						text = text.replace("\n", "")
-								.replace("<br>", "\n")
-								.replaceAll(".*<P", "<P")
-								.replaceAll("\n\n/|\n", "\n")
-								.replaceAll("<b>|</b>|&nbsp;", "")
-								.replaceAll("<\\/.+>", "")
-								.replaceAll("<.+>", "");
+						
+						text = text.replace("\n", "") //기존에 존재하는 개행문자 제거
+								.replaceAll("<(br|BR)>", "\n") //br 태그 변환
+								.replaceAll(".*<P", "<P") //<P 태그 앞 제거 (Sync 태그)
+								.replaceAll("\n\n/|\n", "\n") //중복 개행문자 제거
+								.replaceAll("<b>|<B>|<\\/b>|<\\/B>|&nbsp;", "") //빈 문자열 제거
+								.replaceAll("<\\/.+>", "") //닫는 태그 제거
+								.replaceAll("<([^<>]+)>", ""); //모든 태그 제거
 
 						Matcher pClassMtr = pClassPtn.matcher(text);
 						if (pClassMtr.find()) {
