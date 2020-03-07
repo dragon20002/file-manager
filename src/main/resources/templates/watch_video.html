@@ -109,6 +109,10 @@
 
 			let trackSrc = videoSrc.substring(0, videoSrc.lastIndexOf('.')) + ".vtt";
 			video.find('track').attr('src', trackSrc);
+			if (window.navigator.userAgent.indexOf("MSIE ") >= 0 ||
+					window.navigator.userAgent.indexOf("Trident/") >= 0) { //IE용 자막로드
+				loadTrackWithAjax(video.find('track')[0]);
+			}
 
 			video[0].load();
 			video[0].play();
@@ -132,6 +136,19 @@
 
 			curPlayIdx = idx;
 		}); //mp4-file ajax, done
+	}
+
+	function loadTrackWithAjax(track) {
+		var xhttp = new XMLHttpRequest();
+		
+		xhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200 && this.responseText) {
+				var blob = new Blob([this.responseText], {type: 'text/vtt'});
+				track.setAttribute('src', URL.createObjectURL(blob));
+			}
+		};
+		xhttp.open('GET', track.src, true);
+		xhttp.send();
 	}
 
 	function onVideoError(e) {

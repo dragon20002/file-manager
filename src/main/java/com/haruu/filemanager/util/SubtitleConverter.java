@@ -17,29 +17,33 @@ import org.slf4j.LoggerFactory;
 public class SubtitleConverter {
 	private static Logger log = LoggerFactory.getLogger(SubtitleConverter.class);
 
-	private static String CHAR_SET = "UTF-8";  
-	
+	/**
+	 * 변환은 잘 되는데 브라우저에서 자막파일 읽을 때 EUC-KR을 인식 못함 
+	 */
 	public static File convertSmiToVtt(File smiFile, File vttFile) {
 		long lineNum = 0;
 		Pattern syncTagPtn = Pattern.compile("sync start=[0-9]+");
 		Pattern tsPtn = Pattern.compile("[0-9]+"); //timestamp pattern
 		Pattern pClassPtn = Pattern.compile("<p class=.*>");
 
+		String charset = CharsetDetector.getCharset(smiFile);
+		log.debug("CHAR-SET = " + charset);
+
 		try {
 			vttFile.createNewFile();
 			PrintWriter writer = new PrintWriter(
 					new OutputStreamWriter(
 							new FileOutputStream(vttFile),
-							CHAR_SET)
+							charset)
 					);
-			writer.println("WEBVTT\n\n");
+			writer.println(decode("WEBVTT\n\n", charset));
 
 			BufferedReader reader = new BufferedReader(
 					new InputStreamReader(
 							new FileInputStream(smiFile),
-							CHAR_SET)
+							charset)
 					);
-			String startLine = decode(reader.readLine());
+			String startLine = reader.readLine();
 			while (startLine != null) { //한 줄씩 읽기
 				if (syncTagPtn.matcher(startLine.toLowerCase()).find()) {
 					// Start Timestamp
@@ -54,11 +58,11 @@ public class SubtitleConverter {
 					long linePos = lineNum + 1; //현재 읽고 있는 줄 번호
 					String text = startLine; //자막 내용
 
-					String nextLine = decode(reader.readLine());
+					String nextLine = reader.readLine();
 					while (nextLine != null && !syncTagPtn.matcher(nextLine.toLowerCase()).find()) {
 						text += nextLine;
 						linePos++;
-						nextLine = decode(reader.readLine());
+						nextLine = reader.readLine();
 					}
 
 					if (nextLine == null) {
@@ -92,8 +96,8 @@ public class SubtitleConverter {
 						}
 
 						if (!text.isEmpty()) {
-							writer.println(tsToTime(startTs) + " --> " + tsToTime(endTs));
-							writer.println(text);
+							writer.println(decode(tsToTime(startTs) + " --> " + tsToTime(endTs), charset));
+							writer.println(decode(text, charset));
 							writer.println();
 						}
 					}
@@ -102,7 +106,7 @@ public class SubtitleConverter {
 					startLine = nextLine;
 				} else {
 					lineNum++;
-					startLine = decode(reader.readLine());
+					startLine = reader.readLine();
 				}
 
 			}
@@ -127,8 +131,8 @@ public class SubtitleConverter {
 		return String.format("%02d:%02d:%02d.%03d", hour, min, sec, millis);
 	}
 
-	private static String decode(String input) {
-		// TODO char-set 변환
+	private static String decode(String input, String charset) {
+		// TODO - charset 변경
 		return input;
 	}
 
