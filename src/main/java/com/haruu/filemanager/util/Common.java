@@ -72,7 +72,8 @@ public class Common {
 
 		@Override
 		public boolean accept(File pathname) {
-			return pathname.getName().endsWith(".mp4");
+			String name = pathname.getName();
+			return name.endsWith(".mp4") || name.endsWith(".avi") || name.endsWith(".mkv");
 		}
 	}
 	

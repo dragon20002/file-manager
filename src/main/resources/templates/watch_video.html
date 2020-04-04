@@ -172,6 +172,24 @@
 	  }
 	}
 
+	/**
+	 * Open the video in fullscreen.
+	 * Note that we must include prefixes for different browsers, as they don't support the requestFullscreen method yet
+	 */
+	function openFullscreen() {
+		var elem = video[0];
+
+		if (elem.requestFullscreen) {
+			elem.requestFullscreen();
+		} else if (elem.mozRequestFullScreen) { /* Firefox */
+			elem.mozRequestFullScreen();
+		} else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+			elem.webkitRequestFullscreen();
+		} else if (elem.msRequestFullscreen) { /* IE/Edge */
+			elem.msRequestFullscreen();
+		}
+	}
+
 </script>
 </th:block>
 
@@ -181,6 +199,8 @@
 	<h4 id="video-name"></h4>
 
 	<hr>
+
+	<a href="javascript:openFullscreen()" style="float: right">전체화면</a>
 
 	<video id="video" width="100%" controls onerror="onVideoError(event)">
 		<source src="">
