@@ -12,8 +12,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.haruu.filemanager.model.FileInfo;
 
 public class Common {
-	
-	/* Convert to FileInfo */
+
+	/* ---------- FILE ---------- */
+
+	/**
+	 * Convert to FileInfo
+	 */
 	public static FileInfo getFileInfo(File file) {
 		if (file == null) return null;
 
@@ -24,10 +28,13 @@ public class Common {
 				file.getName(),
 				file.length() / 1024,
 				rootDirName,
-				encodeURI(file.getName()));
+				encodeURI(file.getName()),
+				file.isDirectory());
 	}
 
-	/* JS encodeURI */
+	/**
+	 * JS encodeURI
+	 */
 	public static String encodeURI(String src) {
 		String dest = null;
 		try {
@@ -44,22 +51,41 @@ public class Common {
 		return dest;
 	}
 
-	/* Save received file */
+	/**
+	 * Save received file
+	 * 
+	 * @param mpFile uploaded file
+	 * @param realDirPath file path to save
+	 * @return saved file
+	 */
 	public static File save(MultipartFile mpFile, String realDirPath) throws IllegalStateException, IOException {
 		File file = new File(realDirPath + "/" + mpFile.getOriginalFilename());
 		mpFile.transferTo(file);
 		return file;
 	}
 
-	/* REGEX */
+	/* ---------- REGEX ----------- */
+	
 	private static Pattern unsafeFilenamePtn = Pattern.compile("/(\\/\\.\\.)|(\\.\\.\\/)|(\\\\\\.\\.)|(\\.\\.\\\\)/"); 
 
+	/**
+	 * Check unsafe file name
+	 * 
+	 * @param file name to check
+	 * @return if unsafe true else false
+	 */
 	public static boolean isUnSafe(String filename) {
 		// /.. or ../ or \.. or ..\
 		return unsafeFilenamePtn.matcher(filename).matches();
 	}
 
-	/* File Filter */
+	/* ---------- File Filter ---------- */
+
+	/**
+	 * 'mp3' Extension file filter
+	 * 
+	 * @author haruu
+	 */
 	public static class Mp3FileFilter implements FileFilter {
 
 		@Override
@@ -68,6 +94,11 @@ public class Common {
 		}
 	}
 
+	/**
+	 * 'mp4' Extension file filter
+	 * 
+	 * @author haruu
+	 */
 	public static class Mp4FileFilter implements FileFilter {
 
 		@Override
