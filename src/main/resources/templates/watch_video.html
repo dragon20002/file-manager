@@ -16,22 +16,73 @@
 	const titleH4 = $('#video-name');
 	const video = $('#video');
 	const fileTableBody = $('#file-table').children('tbody');
+	const filePathIdx = {}; //{ idx: filePath }
 	let curPlayIdx = -1;
 
 	video[0].onended = function() {
 		play(curPlayIdx + 1);
 	};
-	
-	let dest = 'api/mp4-files';
+
+	let depth = "[[ ${session.depth} ]]";
+	if (depth.length == 0) depth = 0;
+	let dirPath = "[[ ${session.dirPath} ]]";
+	if (dirPath.length == 0) dirPath = '';
+
+	function updateDir(_depth, _dirPath) {
+		depth = _depth;
+		dirPath = _dirPath;
+		
+		$('#sess-depth').text(depth);
+		$('#sess-dir-path').text(dirPath);
+	}
+
+	function getNameFromPath(path) {
+		const names = path.split('/');
+		return names[names.length - 1];
+	}
+
+	let dest = `/api/mp4-dir/${depth}/${getNameFromPath(dirPath)}`;
 	$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
 		if (xhr.status != 200) return;
-		let fileInfos = data;
+		let fileInfos = data.fileInfos;
 
+		updateDir(data.depth, data.dirPath);
+
+		// 파일 목록 추가
+		appendFiles(fileInfos);
+	});
+
+	$('#go-to-parent-dir').click(function () {
+		if (!depth || depth < 0)
+			return;
+
+		$.get(`/api/mp4-dir/${depth - 1}`).done(function(data, textStatus, xhr) {
+			if (xhr.status != 200) {
+				alert('작업위치 변경 실패');
+				return;
+			}
+			let fileInfos = data.fileInfos;
+
+			// 기존 파일 목록 제거
+			let fileTableRows = fileTableBody.children('tr');
+			for (let i = 0; i < fileTableRows.length; i++) {
+				fileTableRows[i].remove();
+				filePathIdx[i] = undefined;
+			}
+
+			updateDir(data.depth, data.dirPath);
+
+			// 파일 목록 추가
+			appendFiles(fileInfos);
+		});
+	});
+
+	function appendFiles(fileInfos) {
 		let idx = 0;
 		fileInfos.forEach(function(fileInfo) {
 			let extStartIdx = fileInfo.name.lastIndexOf('.');
 			let noExtFileName = fileInfo.name.substring(0, extStartIdx);
-			let imgSrc = encodeURI(fileInfo.rootDirName + '/' + noExtFileName + '.png');
+			let imgSrc = encodeURI(fileInfo.rootDirName + '/' + fileInfo.dirPath + '/' + noExtFileName + '.png');
 
 			// Row
 			let tr = document.createElement("tr");
@@ -41,12 +92,14 @@
 			let imgTd = document.createElement("td");
 			imgTd.style.padding = "5px 5px 5px 5px";
 			
-			let previewImg = document.createElement("img");
-			previewImg.src = imgSrc;
-			previewImg.width = 200;
-			previewImg.alt = "";
-			
-			imgTd.appendChild(previewImg);
+			if (!fileInfo.dir) {
+				let previewImg = document.createElement("img");
+				previewImg.src = imgSrc;
+				previewImg.width = 200;
+				previewImg.alt = "";
+
+				imgTd.appendChild(previewImg);
+			}
 
 			tr.appendChild(imgTd);
 			
@@ -54,14 +107,21 @@
 			let rootDirNameTd = document.createElement("td");
 			rootDirNameTd.style.padding = "5px 5px 5px 5px";
 			rootDirNameTd.innerText = fileInfo.rootDirName;
-			
+
 			tr.appendChild(rootDirNameTd);
-			
+
 			// Col 2 : name
 			let nameTd = document.createElement("td");
 			nameTd.style.padding = "5px 5px 5px 5px";
-			nameTd.innerText = fileInfo.name;
-			
+			if (fileInfo.dir) {
+				let nameA = document.createElement("a");
+				nameA.innerText = fileInfo.name;
+				nameA.href = `javascript:getDir(${idx}, '${fileInfo.name}')`;
+				nameTd.appendChild(nameA);
+			} else {
+				nameTd.innerText = fileInfo.name;
+			}
+
 			tr.appendChild(nameTd);
 			
 			// Col 3 : size
@@ -74,19 +134,55 @@
 			// Col 4 : play button
 			let playTd = document.createElement("td");
 			playTd.style.padding = "5px 5px 5px 5px";
-	
-			let playA = document.createElement("a");
-			playA.href = "javascript:play(" + idx + ")";
-			playA.innerHTML = '<i class="fas fa-play"></i>';
+			if (!fileInfo.dir) {
+				let playA = document.createElement("a");
+				playA.href = "javascript:play(" + idx + ")";
+				playA.innerHTML = '<i class="fas fa-play"></i>';
 
-			playTd.appendChild(playA);
+				playTd.appendChild(playA);
+			}
 
 			tr.appendChild(playTd);
-			
+
+			// Complete appending an item
 			fileTableBody.append(tr);
+			filePathIdx[idx] = fileInfo.rootDirName + '/' + fileInfo.dirPath + '/' + fileInfo.name;
 			idx++;
 		});
-	});
+	}
+	
+	function getDir(idx, dirName) {
+		let filePath = filePathIdx[idx];
+		if (filePath == undefined) {
+			alert('해당 폴더를 찾을 수 없음');
+			return;
+		}
+
+		if (!depth || depth < 0)
+			depth = 0;
+
+		$.get(`/api/mp4-dir/${depth + 1}/${encodeURI(dirName)}`).done(function(data, textStatus, xhr) {
+			if (xhr.status != 200) {
+				alert('작업위치 변경 실패');
+				return;
+			}
+			let fileInfos = data.fileInfos;
+
+			// 기존 파일 목록 제거
+			let fileTableRows = fileTableBody.children('tr');
+			for (let i = 0; i < fileTableRows.length; i++) {
+				let tr = fileTableRows[i];
+				tr.remove();
+				filePathIdx[i] = undefined;
+			}
+
+			// 경로 변경
+			updateDir(data.depth, data.dirPath);
+
+			// 파일 목록 추가
+			appendFiles(fileInfos);
+		});
+	}
 
 	function play(idx) {
 		let tr = fileTableBody.children('tr')[idx];
@@ -104,7 +200,7 @@
 			titleH4.text(fileInfo.name);
 
 			// video tag
-			let videoSrc = encodeURI(fileInfo.rootDirName + '/' + fileInfo.name);
+			let videoSrc = encodeURI(fileInfo.rootDirName + '/' + fileInfo.dirPath + '/' + fileInfo.name);
 			video.find('source').attr('src', videoSrc);
 
 			let trackSrc = videoSrc.substring(0, videoSrc.lastIndexOf('.')) + ".vtt";
@@ -129,7 +225,7 @@
 				curTr.css('color', 'dodgerblue');
 				let extStartIdx = fileInfo.name.lastIndexOf('.');
 				let noExtFileName = fileInfo.name.substring(0, extStartIdx);
-				let imgSrc = encodeURI(fileInfo.rootDirName + '/' + noExtFileName + '.png');
+				let imgSrc = encodeURI(fileInfo.rootDirName + '/' + fileInfo.dirPath + '/' + noExtFileName + '.png');
 				curTr.children('MP4_TNIL_COL').children('img').attr('src', imgSrc);
 				curTr.find('i').remove();
 			}
@@ -195,6 +291,18 @@
 
 <div layout:fragment="content" class="container-fluid">
 	<div style="height: 10px"></div>
+
+	<div>
+		<!-- 현재 작업위치 표시 -->
+		현재 경로 :
+		[
+		<span id="sess-depth" th:text="${session.depth}"></span>
+		] 
+		<span id="sess-dir-path" th:text="${session.dirPath}"></span>
+
+		<!-- 상위폴더 버튼 -->
+		<button id="go-to-parent-dir" class="btn btn-primary btn-sm"><i class="fas fa-level-up-alt"></i></button>
+	</div>
 
 	<h4 id="video-name"></h4>
 

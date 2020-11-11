@@ -11,7 +11,8 @@
 	const MP3_NAME_COL = 1;
 	const MP3_SIZE_COL = 2;
 	const MP3_PLAY_COL = 3;
-	
+	const MP3_PATH_COL = 4;
+
 	const titleH4 = $('#music-name');
 	const audio = $('#audio');
 	const fileTableBody = $('#file-table').children('tbody');
@@ -65,7 +66,15 @@
 			playTd.appendChild(playA);
 
 			tr.appendChild(playTd);
-			
+
+			// Col 4 : dir path (hidden)
+			let dirPathTd = document.createElement("td");
+			dirPathTd.style.display = "none";
+			dirPathTd.innerText = fileInfo.dirPath;
+
+			tr.appendChild(dirPathTd);
+
+			// Complete appending an item
 			fileTableBody.append(tr);
 			idx++;
 		});
@@ -77,19 +86,21 @@
 		if (tr == undefined) return;
 
 		let rootDirName = tr.children[MP3_ROOT_COL].innerText;  
+		let dirPath = tr.children[MP3_PATH_COL].innerText;
 		let fileName = tr.children[MP3_NAME_COL].innerText;
 
 		// Request MP3
 		let dest = encodeURI('api/mp3-files/' + rootDirName + '/' + fileName);
-		$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
+		$.ajax({ method: "POST", url: dest, data: { dirPath }, }).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) return;
 			let fileInfo = data;
+			console.log(fileInfo);
 
 			// title
 			titleH4.text(fileInfo.name);
-	
+
 			// audio tag
-			let audioSrc = encodeURI(fileInfo.rootDirName + '/' + fileInfo.name);
+			let audioSrc = '/' + encodeURI(fileInfo.rootDirName + '/' + fileInfo.dirPath + '/' + fileInfo.name);
 			audio.find('source').attr('src', audioSrc);
 	
 			audio[0].load();
@@ -113,14 +124,15 @@
 
 		// Request ID3v2
 		dest = encodeURI('api/mp3-files/' + rootDirName + '/' + fileName + '/id3');
-		$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
+		$.ajax({ method: "POST", url: dest, data: { dirPath }, }).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) return;
 			let id3 = data;
+			console.log(id3);
 
 			// album image
 			let img = $('#album-image');
 	
-			let imgSrc = encodeURI(rootDirName + '/' + fileName);
+			let imgSrc = encodeURI(rootDirName + '/' + dirPath + '/' + fileName);
 			imgSrc = imgSrc.substring(0, imgSrc.lastIndexOf('.')) + ".png";
 			img.attr('src', imgSrc);
 	
@@ -139,7 +151,6 @@
 				id3Ul.append('<li>연도: ' + id3.year + '</li>');
 			if (id3.genreDescription != null)
 				id3Ul.append('<li>장르: ' + id3.genreDescription + '</li>');
-
 		}); //id3v2 ajax, done
 	}
 
@@ -168,7 +179,7 @@
 
 	<table id="file-table" class="table-responsive table-striped">
 		<thead>
-			<tr style="text-align: center"><th>그룹</th><th>파일명</th><th>크기</th><th></th>
+			<tr style="text-align: center"><th>그룹</th><th>파일명</th><th>크기</th><th></th><th></th>
 		</thead>
 		<tbody></tbody>
 	</table>

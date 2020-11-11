@@ -1,7 +1,9 @@
 package com.haruu.filemanager.controller;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -31,45 +33,112 @@ public class FileRestController {
 	@Autowired
 	private FileService fileService;
 
-	@GetMapping("/api/cd/{rootDirName}/{depth}/{dirName}")
-	public ResponseEntity<List<FileInfo>> getDir(@PathVariable String rootDirName, @PathVariable Integer depth, @PathVariable String dirName, HttpServletRequest request) {
-		HttpSession session = request.getSession();
+	/**
+	 * 작업위치 변경
+	 * 
+	 * @param depth 변경 대상 작업위치 레벨
+	 * @param dirName 변경 대상 작업위치명
+	 * @param request HttpRequest
+	 * @return
+	 */
+	@GetMapping("/api/dir/{depth}")
+	public ResponseEntity<Map<String, Object>> getDir(@PathVariable int depth, HttpServletRequest request) {
+		return getDir(depth, "", request);
+	}
 
-		Integer oldDepth = Session.getDepth(session);
+	/**
+	 * 작업위치 변경
+	 * 
+	 * @param depth 변경 대상 작업위치 레벨
+	 * @param dirName 변경 대상 작업위치명
+	 * @param request HttpRequest
+	 * @return
+	 */
+	@GetMapping("/api/dir/{depth}/{dirName}")
+	public ResponseEntity<Map<String, Object>> getDir(@PathVariable int depth, @PathVariable String dirName, HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		int oldDepth = Session.getDepth(session);
 		String oldDirPath = Session.getDirPath(session);
 
 		String dirPath = "";
-
 		if (oldDepth == depth - 1) { //하위폴더로 이동
 			dirPath = oldDirPath + "/" + dirName;
 		} else if (oldDepth == depth + 1) { //상위폴더로 이동
 			String[] toks = oldDirPath.split("/");
 			for (int i = 0; i < toks.length - 1; i++) {
-				dirPath += ("/" + toks[i]);
+				if (toks[i].length() > 0) {
+					dirPath += ("/" + toks[i]);
+				}
 			}
-		} else { //세션에 저장된 dirPath와 클라이언트 dirPath 불일치
+		} else if (oldDepth != depth) { //세션에 저장된 dirPath와 클라이언트 dirPath 불일치
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+		} else {
+			dirPath = oldDirPath;
 		}
 
 		Session.setDepth(session, depth);
 		Session.setDirPath(session, dirPath);
 
 		// 파일정보 목록
-		List<FileInfo> fileInfos = fileService.findAll(FileService.DIR_NAME, "", null);
+		List<FileInfo> fileInfos = fileService.findAll(FileService.DIR_NAME, dirPath, null);
 		if (request.isUserInRole("ADMIN"))
-			fileInfos.addAll(fileService.findAll(FileService.SAFE_DIR_NAME, "", null));
+			fileInfos.addAll(fileService.findAll(FileService.SAFE_DIR_NAME, dirPath, null));
 
-		return new ResponseEntity<>(fileInfos, HttpStatus.OK);
+		Map<String, Object> data = new HashMap<>();
+		data.put("depth", depth);
+		data.put("dirPath", dirPath);
+		data.put("fileInfos", fileInfos);
+
+		return new ResponseEntity<>(data, HttpStatus.OK);
 	}
 
-	@PostMapping("/api/cd/{rootDirName}")
-	public ResponseEntity<List<FileInfo>> postDir(@PathVariable String rootDirName, @RequestParam(defaultValue = "1") Integer depth, @RequestParam(defaultValue = "") String dirName) {
+	/**
+	 * 작업위치 추가
+	 * 
+	 * @param dirName 추가 대상 작업위치명 
+	 * @param request HttpRequest
+	 * @return
+	 */
+	@PostMapping("/api/dir/" + FileService.DIR_NAME)
+	public ResponseEntity<FileInfo> postDir(@RequestParam String dirName, HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String dirPath = Session.getDirPath(session);
+
 		// 디렉터리 생성
-		if (fileService.generateDir(rootDirName, "", dirName))
-			return new ResponseEntity<>(HttpStatus.CREATED); //생성 성공
+		FileInfo dirInfo = fileService.generateDir(FileService.DIR_NAME, dirPath, dirName);
+		if (dirInfo != null)
+			return new ResponseEntity<>(dirInfo, HttpStatus.CREATED); //생성 성공
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT); //생성 실패
 	}
 
+	/**
+	 * Safe 작업위치 생성
+	 * 
+	 * @param dirName 생성 대상 작업위치명
+	 * @param request HttpRequest
+	 * @return
+	 */
+	@PostMapping("/api/dir/" + FileService.SAFE_DIR_NAME)
+	public ResponseEntity<FileInfo> postSafeDir(@RequestParam String dirName, HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String dirPath = Session.getDirPath(session);
+
+		if (!request.isUserInRole("ADMIN"))
+			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+		// 디렉터리 생성
+		FileInfo dirInfo = fileService.generateDir(FileService.SAFE_DIR_NAME, dirPath, dirName);
+		if (dirInfo != null)
+			return new ResponseEntity<>(dirInfo, HttpStatus.CREATED); //생성 성공
+		return new ResponseEntity<>(HttpStatus.NO_CONTENT); //생성 실패
+	}
+
+	/**
+	 * 파일 목록
+	 * 
+	 * @param request HttpRequest
+	 * @return
+	 */
 	@GetMapping("/api/files")
 	public ResponseEntity<List<FileInfo>> getFiles(HttpServletRequest request) {
 		HttpSession session = request.getSession();
@@ -83,30 +152,65 @@ public class FileRestController {
 		return new ResponseEntity<>(fileInfos, HttpStatus.OK);
 	}
 
-	@GetMapping("/api/files/{rootDirName}/{fileName}")
-	public ResponseEntity<FileInfo> getFile(@PathVariable String rootDirName, @PathVariable String fileName, HttpServletRequest request) {
+	/**
+	 * 파일 정보
+	 * 
+	 * @param fileName 파일명
+	 * @param request HttpRequest
+	 * @return
+	 */
+	@GetMapping("/api/files/" + FileService.DIR_NAME + "/{fileName}")
+	public ResponseEntity<FileInfo> getFile(@PathVariable String fileName, HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		String dirPath = Session.getDirPath(session);
 
-		// 권한 확인
-		if (rootDirName.equals(FileService.SAFE_DIR_NAME) && !request.isUserInRole("ADMIN"))
-			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 		// 파일정보
-		FileInfo fileInfo = fileService.findOne(rootDirName, dirPath, fileName);
+		FileInfo fileInfo = fileService.findOne(FileService.DIR_NAME, dirPath, fileName);
 		if (fileInfo == null)
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
 		return new ResponseEntity<>(fileInfo, HttpStatus.OK);
 	}
 
-	@PostMapping("/api/files/{rootDirName}")
-	public ResponseEntity<List<FileInfo>> postFile(@PathVariable String rootDirName, @RequestParam MultipartFile[] files, HttpServletRequest request) {
+	/**
+	 * Safe 파일 정보
+	 * 
+	 * @param fileName 파일명
+	 * @param request HttpRequest
+	 * @return
+	 */
+	@GetMapping("/api/files/" + FileService.SAFE_DIR_NAME + "/{fileName}")
+	public ResponseEntity<FileInfo> getSafeFile(@PathVariable String fileName, HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String dirPath = Session.getDirPath(session);
+
+		// 권한 확인
+		if (!request.isUserInRole("ADMIN"))
+			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+		// 파일정보
+		FileInfo fileInfo = fileService.findOne(FileService.SAFE_DIR_NAME, dirPath, fileName);
+		if (fileInfo == null)
+			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+		return new ResponseEntity<>(fileInfo, HttpStatus.OK);
+	}
+
+	/**
+	 * 파일 업로드
+	 * 
+	 * @param files 업로드 파일 목록
+	 * @param request HttpRequest
+	 * @return
+	 */
+	@PostMapping("/api/files/" + FileService.DIR_NAME)
+	public ResponseEntity<List<FileInfo>> postFile(@RequestParam MultipartFile[] files, HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		String dirPath = Session.getDirPath(session);
 
 		try {
 			// 파일 업로드
-			List<FileInfo> fileInfos = fileService.saveAll(rootDirName, dirPath, files);
+			List<FileInfo> fileInfos = fileService.saveAll(FileService.DIR_NAME, dirPath, files);
 			log.debug("{} files saved", fileInfos.size());
 			return new ResponseEntity<>(fileInfos, HttpStatus.CREATED); //업로드 성공
 		} catch (IllegalStateException | IOException e) {
@@ -115,12 +219,48 @@ public class FileRestController {
 		}
 	}
 
-	@DeleteMapping("/api/files/{rootDirName}/{fileName}")
-	public ResponseEntity<Void> deleteFile(@PathVariable String rootDirName, @PathVariable String fileName, HttpServletRequest request) {
+	/**
+	 * Safe 파일 업로드
+	 * 
+	 * @param files 업로드 파일 목록
+	 * @param request HttpRequest
+	 * @return
+	 */
+	@PostMapping("/api/files/" + FileService.SAFE_DIR_NAME)
+	public ResponseEntity<List<FileInfo>> postSafeFile(@RequestParam MultipartFile[] files, HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		String dirPath = Session.getDirPath(session);
 
-		if (request.isUserInRole("ADMIN") && fileService.delete(rootDirName, dirPath, fileName))
+		if (!request.isUserInRole("ADMIN"))
+			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+		try {
+			// 파일 업로드
+			List<FileInfo> fileInfos = fileService.saveAll(FileService.SAFE_DIR_NAME, dirPath, files);
+			log.debug("{} files saved", fileInfos.size());
+			return new ResponseEntity<>(fileInfos, HttpStatus.CREATED); //업로드 성공
+		} catch (IllegalStateException | IOException e) {
+			log.debug(e.getMessage());
+			return new ResponseEntity<>(HttpStatus.NO_CONTENT); //업로드 실패
+		}
+	}
+
+	@DeleteMapping("/api/files/" + FileService.DIR_NAME + "/{fileName}")
+	public ResponseEntity<Void> deleteFile(@PathVariable String fileName, HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String dirPath = Session.getDirPath(session);
+
+		if (fileService.delete(FileService.DIR_NAME, dirPath, fileName))
+			return new ResponseEntity<>(HttpStatus.OK); //삭제 성공
+		return new ResponseEntity<>(HttpStatus.NO_CONTENT); //삭제 실패
+	}
+
+	@DeleteMapping("/api/files/" + FileService.SAFE_DIR_NAME + "/{fileName}")
+	public ResponseEntity<Void> deleteSafeFile(@PathVariable String fileName, HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String dirPath = Session.getDirPath(session);
+
+		if (request.isUserInRole("ADMIN") && fileService.delete(FileService.SAFE_DIR_NAME, dirPath, fileName))
 			return new ResponseEntity<>(HttpStatus.OK); //삭제 성공
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT); //삭제 실패
 	}

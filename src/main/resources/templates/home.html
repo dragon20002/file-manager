@@ -30,21 +30,63 @@
 	const fileTableBody = $('#file-table').children('tbody');
 	const filePathIdx = {}; //{ idx: filePath }, 파일삭제할 때 테이블 행 제거를 위한 파일경로 인덱스
 
-	let dest = 'api/files';
-	$.ajax({ method: "GET", url: dest }).done(function(data, textStatus, xhr) {
-		if (xhr.status != 200) return;
-		let fileInfos = data;
+	let depth = "[[ ${session.depth} ]]";
+	if (depth.length == 0) depth = 0;
+	let dirPath = "[[ ${session.dirPath} ]]";
+	if (dirPath.length == 0) dirPath = '';
 
-		// 파일 목록 추가
-		appendFiles(fileInfos);
+	function updateDir(_depth, _dirPath) {
+		depth = _depth;
+		dirPath = _dirPath;
+
+		$('#sess-depth').text(depth);
+		$('#sess-dir-path').text(dirPath);
+	}
+
+	function getRootDirName() {
+		return $('input[name=rootDirName]:checked').val();
+	}
+
+	function getNameFromPath(path) {
+		const names = path.split('/');
+		return names[names.length - 1];
+	}
+
+	$.get(`api/dir/${depth}/${getNameFromPath(dirPath)}`).done(function(data, textStatus, xhr) {
+		if (xhr.status == 200) {
+			let fileInfos = data.fileInfos;
+
+			// 작업위치 변경
+			updateDir(data.depth, data.dirPath);
+
+			// 파일 목록 추가
+			appendFiles(fileInfos);
+		}
+	});
+
+	$('#create-dir').click(function () {
+		let dirName = prompt('새 폴더명');
+		if (dirName === null || dirName.length <= 0)
+			return;
+
+		$.post(`/api/dir/${getRootDirName()}`, { dirName }).done(function(data, textStatus, xhr) {
+			if (xhr.status == 201) { // 새 폴더 추가
+				appendFiles([data]); // dir info
+			}
+		});
 	});
 
 	$('#upload-btn').click(function () {
-		let rootDirName = $('#rootDirName')[0].value;
-		let dest = 'api/files/' + rootDirName;
 		let uploadForm = document.getElementById('upload-form');
-		let body = new FormData(uploadForm);
-		$.ajax({ method: "POST", url: dest, data: body, contentType: false, processData: false }).done(function(data, textStatus, xhr) {
+		let data = new FormData(uploadForm);
+
+		$.ajax({
+			method: "post",
+			url: `/api/files/${getRootDirName()}`,
+			data,
+			contentType: false,
+			processData: false,
+		}).done(function(data, textStatus, xhr) {
 			if (xhr.status != 201) return;
 			let fileInfos = data;
 
@@ -56,10 +98,36 @@
 		});
 	});
 
+	$('#go-to-parent-dir').click(function () {
+		if (!depth || depth < 0)
+			return;
+
+		$.get(`/api/dir/${depth - 1}`).done(function(data, textStatus, xhr) {
+			if (xhr.status != 200) {
+				alert('작업위치 변경 실패');
+				return;
+			}
+			let fileInfos = data.fileInfos;
+
+			// 기존 파일 목록 제거
+			let fileTableRows = fileTableBody.children('tr');
+			for (let i = 0; i < fileTableRows.length; i++) {
+				fileTableRows[i].remove();
+				filePathIdx[i] = undefined;
+			}
+
+			updateDir(data.depth, data.dirPath);
+
+			// 파일 목록 추가
+			appendFiles(fileInfos);
+		});
+	});
+
 	function appendFiles(fileInfos) {
 		let idx = 0;
 		fileInfos.forEach(function(fileInfo) {
-			let encFilePath = encodeURI(fileInfo.rootDirName + '/' + fileInfo.name);
+			console.log(fileInfo);
+			let encFilePath = encodeURI(fileInfo.rootDirName + dirPath + '/' + fileInfo.name);
 
 			// Row
 			let tr = document.createElement("tr");
@@ -71,12 +139,19 @@
 			rootDirNameTd.innerText = fileInfo.rootDirName;
 
 			tr.appendChild(rootDirNameTd);
-			
+
 			// Col 1 : name
 			let nameTd = document.createElement("td");
 			nameTd.style.padding = "5px 5px 5px 5px";
-			nameTd.innerText = fileInfo.name;
-			
+			if (fileInfo.dir) {
+				let nameA = document.createElement("a");
+				nameA.innerText = fileInfo.name;
+				nameA.href = `javascript:getDir(${idx}, '${fileInfo.name}')`;
+				nameTd.appendChild(nameA);
+			} else {
+				nameTd.innerText = fileInfo.name;
+			}
+
 			tr.appendChild(nameTd);
 			
 			// Col 2 : size
@@ -85,17 +160,18 @@
 			sizeTd.innerText = fileInfo.size + " KB";
 
 			tr.appendChild(sizeTd);
-			
+
 			// Col 3 : download button
 			let downloadTd = document.createElement("td");
 			downloadTd.style.padding = "5px 5px 5px 5px";
+			if (!fileInfo.dir) {
+				let downloadA = document.createElement("a");
+				downloadA.href = encFilePath;
+				downloadA.setAttribute('download', fileInfo.name);
+				downloadA.innerHTML = '<i class="fas fa-download"></i>';
 	
-			let downloadA = document.createElement("a");
-			downloadA.href = encFilePath;
-			downloadA.setAttribute('download', fileInfo.name);
-			downloadA.innerHTML = '<i class="fas fa-download"></i>';
-
-			downloadTd.appendChild(downloadA);
+				downloadTd.appendChild(downloadA);
+			}
 
 			tr.appendChild(downloadTd);
 
@@ -112,8 +188,41 @@
 			tr.appendChild(deleteTd);
 			
 			fileTableBody.append(tr);
-			filePathIdx[idx] = fileInfo.rootDirName + '/' + fileInfo.name;
+			filePathIdx[idx] = fileInfo.rootDirName + '/' + fileInfo.dirPath + '/' + fileInfo.name;
 			idx++;
+		});
+	}
+
+	function getDir(idx, dirName) {
+		let filePath = filePathIdx[idx];
+		if (filePath == undefined) {
+			alert('해당 폴더를 찾을 수 없음');
+			return;
+		}
+
+		if (!depth || depth < 0)
+			depth = 0;
+
+		$.get(`/api/dir/${depth + 1}/${encodeURI(dirName)}`).done(function(data, textStatus, xhr) {
+			if (xhr.status != 200) {
+				alert('작업위치 변경 실패');
+				return;
+			}
+			let fileInfos = data.fileInfos;
+
+			// 기존 파일 목록 제거
+			let fileTableRows = fileTableBody.children('tr');
+			for (let i = 0; i < fileTableRows.length; i++) {
+				let tr = fileTableRows[i];
+				tr.remove();
+				filePathIdx[i] = undefined;
+			}
+
+			// 경로 변경
+			updateDir(data.depth, data.dirPath);
+
+			// 파일 목록 추가
+			appendFiles(fileInfos);
 		});
 	}
 
@@ -122,11 +231,12 @@
 		if (filePath == undefined || !confirm("정말로 삭제하시겠습니까?"))
 			return;
 
-		let dest = encodeURI('api/files/' + filePath);
-		let csrfToken = $('#delete-form').children('input')[0].value;
-		$.ajax({ method: "DELETE", url: dest, headers: {'X-CSRF-TOKEN': csrfToken} }).done(function(data, textStatus, xhr) {
+		$.ajax({
+			method: "delete",
+			url: `/api/files/${getRootDirName()}/${encodeURI(getNameFromPath(filePath))}`,
+		}).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) {
-				alert('삭제 권한 없음');
+				alert('삭제 실패');
 				return;
 			}
 
@@ -148,16 +258,42 @@
 <div layout:fragment="content" class="container-fluid">
 	<div style="height: 10px"></div>
 
-	<form id="upload-form" action="/" method="post" enctype="multipart/form-data">
-		<input type="hidden" th:name="${_csrf.getParameterName()}" th:value="${_csrf.getToken()}">
+	<div>
+		<!-- 현재 작업위치 표시 -->
+		현재 경로 :
+		[
+		<span id="sess-depth" th:text="${session.depth}"></span>
+		] 
+		<span id="sess-dir-path" th:text="${session.dirPath}"></span>
 
+		<!-- 상위폴더 버튼 -->
+		<button id="go-to-parent-dir" class="btn btn-primary btn-sm"><i class="fas fa-level-up-alt"></i></button>
+
+		<br>
+
+		<!-- Root -->
+		<div class="form-check-inline">
+			<label class="form-check-label">
+				<input type="radio" class="form-check-input" name="rootDirName" th:text="${rootDirName}" th:value="${rootDirName}" checked>
+			</label>
+		</div>
+		<div class="form-check" sec:authorize="isAuthenticated()">
+			<label class="form-check-label">
+				<input type="radio" class="form-check-input" name="rootDirName" th:text="${rootSafeDirName}" th:value="${rootSafeDirName}">
+			</label>
+		</div>
+
+		<!-- 새 폴더 버튼 -->
+		<button id="create-dir" class="btn btn-primary btn-sm"><i class="fas fa-folder-plus"></i></button>
+	</div>
+
+	<form id="upload-form" action="/" method="post" enctype="multipart/form-data">
 		<div class="form-group upload-box">
 			<input type="file" class="upload-box-input" id="file" name="files"
 				data-multiple-caption="{count} 개 파일" multiple>
 
 			<label class="upload-box-label" for="file">파일을 드래그해서 놓아주세요!</label>
 		</div>
-
 	</form>
 
 	<div class="form-group text-center">
@@ -166,7 +302,6 @@
 	</div>
 
 	<form id="delete-form" action="/" method="post" enctype="multipart/form-data" style="display: none">
-		<input type="hidden" th:name="${_csrf.getParameterName()}" th:value="${_csrf.getToken()}">
 	</form>
 
 	<hr>

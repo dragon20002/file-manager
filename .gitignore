@@ -1,6 +1,7 @@
 /bin/
 /target/
 /webapp/
+/src/main/webapp/
 !.mvn/wrapper/maven-wrapper.jar
 
 ### STS ###

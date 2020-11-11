@@ -14,21 +14,30 @@
 ![aa](https://postfiles.pstatic.net/MjAxOTEyMjJfNiAg/MDAxNTc2OTk0NzI4NDE1.M8hAbqKF29ZE7T3LFOx9mgmkGCP0MWmJTaqecS3gT74g.jvYrfEPFzPspX5JX3yZF98UaECjnQfQAXRsKzZqLYzkg.PNG.dragon20002/11.png?type=w773)
 
 ## Request Mapping Table
-Name | Method | URL
--|-|-
-메인 | GET | /
-로그인 | GET/POST | /login
-로그아웃 | POST | /logout
-파일 목록 | GET | /api/files
-파일 정보 | GET | /api/files/{rootDirName}/{fileName}
-파일 업로드 | POST | /api/files/{rootDirName}
-파일 삭제 | DELETE | /api/files/{rootDirName}/{fileName}
-음악 목록 | GET | /api/mp3-files
-음악 재생 | GET | /api/mp3-files/{rootDirName}/{fileName}
-음악 태그 | GET | /api/mp3-files/{rootDirName}/{fileName}/id3
-영상 목록 | GET | /api/mp4-files
-영상 재생 | GET | /api/mp4-files/{rootDirName}/{fileName}
-|
+| Name | Method | URL | BODY |
+|-|-|-|-|
+| 메인 | GET | / | - |
+| 로그인 | GET/POST | /login | ... |
+| 로그아웃 | POST | /logout | ... |
+| 작업위치 변경 | GET | /api/dir/{depth}/[dirName] | - |
+| 작업위치 추가 | POST | /api/dir/%ROOT_DIR_NAME% | dirName |
+| 작업위치 추가(safe) | POST | /api/dir/%ROOT_SAFE_DIR_NAME% | dirName |
+| 파일 목록 | GET | /api/files | - |
+| 파일 정보 | GET | /api/files/%ROOT_DIR_NAME%/{fileName} | - |
+| 파일 정보(safe) | GET | /api/files/%ROOT_SAFE_DIR_NAME%/{fileName} | - |
+| 파일 업로드 | POST | /api/files/%ROOT_DIR_NAME% | files |
+| 파일 업로드(safe) | POST | /api/files/%ROOT_SAFE_DIR_NAME% | files |
+| 파일 삭제 | DELETE | /api/files/%ROOT_DIR_NAME%/{fileName} | - |
+| 파일 삭제(safe) | DELETE | /api/files/%ROOT_SAFE_DIR_NAME%/{fileName} | - |
+| 음악 목록 | GET | /api/mp3-files | - |
+| 음악 재생 | POST | /api/mp3-files/%ROOT_DIR_NAME%/{fileName} | dirPath |
+| 음악 재생(safe) | POST | /api/mp3-files/%ROOT_SAFE_DIR_NAME%/{fileName} | dirPath |
+| 음악 태그 | POST | /api/mp3-files/%ROOT_DIR_NAME%/{fileName}/id3 | dirPath |
+| 음악 태그(safe) | POST | /api/mp3-files/%ROOT_SAFE_DIR_NAME%/{fileName}/id3 | dirPath |
+| 영상 작업위치 변경 | GET | /api/mp4-dir/{depth}/[dirName] | - |
+| 영상 목록 | GET | /api/mp4-files | - |
+| 영상 재생 | GET | /api/mp4-files/%ROOT_DIR_NAME%/{fileName} | - |
+| 영상 재생 | GET | /api/mp4-files/%ROOT_SAFE_DIR_NAME%/{fileName} | - |
 
 ## Dependencies
 

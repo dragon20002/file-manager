@@ -10,7 +10,7 @@ import java.util.List;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,6 +29,8 @@ public class FileService {
 	private Logger log = LoggerFactory.getLogger(FileService.class);
 	
 	/**
+	 * @implNote
+	 * 
 	 * ## 경로 관련 변수명 설명
 	 * - XXDirName  폴더명
 	 * - YYPath     타고 들어온 폴더명들을 '/'로 합친 문자열
@@ -50,11 +52,15 @@ public class FileService {
 	public static final String SAFE_DIR_NAME = "safe";
 	public static final String[] fs = { DIR_NAME, SAFE_DIR_NAME };
 
-//	@Autowired
-//	private ServletContext context;
-	
-	@Value("${user-properties.file-dir}")
-	private String realRootDirPath;
+	private final DefaultResourceLoader loader;
+
+	private final String realRootDirPath;
+
+	public FileService(DefaultResourceLoader loader) throws IOException {
+		this.loader = loader;
+		realRootDirPath = loader.getResource("file:src/main/webapp").getFile().getAbsolutePath();
+		log.debug("realRootDirPath={}", realRootDirPath);
+	}
 
 	/* ----------- search ---------- */
 
@@ -63,32 +69,57 @@ public class FileService {
 		List<FileInfo> fileInfos = new ArrayList<>();
 
 		// 파일 목록
-		String realDirPath = realRootDirPath + rootDirName + dirPath;
+		String realDirPath = Common.getDirPath(realRootDirPath, rootDirName, dirPath);
 		File directory = new File(realDirPath);
 		if (directory.exists()) {
 			File[] files = directory.listFiles(fileFilter);
 	
 			// 파일정보 목록
+			List<FileInfo> dirInfos = new ArrayList<>();
 			for (File file : files) {
-				FileInfo fileInfo = Common.getFileInfo(file);
-				fileInfos.add(fileInfo);
+				FileInfo fileInfo = Common.getFileInfo(rootDirName, dirPath, file);
+				if (fileInfo.isDir())
+					dirInfos.add(fileInfo);
+				else
+					fileInfos.add(fileInfo);
 			}
+			fileInfos.addAll(0, dirInfos);
 		}
 
 		return fileInfos;
 	}
 
+	// 파일정보 목록 조회 (최하위경로까지 탐색)
+	public List<FileInfo> findAllRecursive(String rootDirName, String dirPath, FileFilter fileFilter) {
+		List<FileInfo> fileInfos = new ArrayList<>();
+
+		fileInfos.addAll(this.findAll(rootDirName, dirPath, fileFilter));
+
+		findAll(rootDirName, dirPath, null).stream().filter(FileInfo::isDir)
+			.forEach((fileInfo) -> {
+				String subDirPath = fileInfo.getDirPath() + "/" + fileInfo.getName();
+				List<FileInfo> subFileInfos = this.findAllRecursive(rootDirName, subDirPath, fileFilter);
+				if (subFileInfos != null) {
+					fileInfos.addAll(subFileInfos);
+				}
+			});
+
+		return fileInfos;
+	}
+
+	// 파일정보 조회
 	public FileInfo findOne(String rootDirName, String dirPath, String fileName) {
 		// 상위 디렉터리 문자열 여부 검사
 		if (Common.isUnSafe(fileName))
 			return null;
 
-		File file = new File(realRootDirPath + rootDirName + dirPath + "/" + fileName);
+		String realFilePath = Common.getDirPath(realRootDirPath, rootDirName, dirPath, fileName);
+		File file = new File(realFilePath);
 		// 파일 유효성 검사
 		if (file == null || !file.exists())
 			return null;
 
-		return Common.getFileInfo(file);
+		return Common.getFileInfo(rootDirName, dirPath, file);
 	}
 
 	/* ---------- create ----------- */
@@ -97,7 +128,7 @@ public class FileService {
 	public List<FileInfo> saveAll(String rootDirName, String dirPath, MultipartFile[] mpFiles) throws IOException {
 		List<FileInfo> fileInfos = new ArrayList<>();
 
-		String realDirPath = realRootDirPath + rootDirName + dirPath;
+		String realDirPath = Common.getDirPath(realRootDirPath, rootDirName, dirPath);
 		FileUtils.forceMkdir(new File(realDirPath));
 
 		for (MultipartFile mpFile : mpFiles) {
@@ -111,7 +142,7 @@ public class FileService {
 
 			try {
 				File file = Common.save(mpFile, realDirPath);
-				fileInfo = Common.getFileInfo(file);
+				fileInfo = Common.getFileInfo(rootDirName, dirPath, file);
 				fileInfos.add(fileInfo);
 			} catch (IOException e) {
 				continue;
@@ -121,23 +152,22 @@ public class FileService {
 		return fileInfos;
 	}
 
-	public boolean generateDir(String rootDirName, String dirPath, String dirName) {
-		String realDirPath = realRootDirPath + rootDirName + dirPath + dirName;
-		
-		boolean genRslt;
+	public FileInfo generateDir(String rootDirName, String dirPath, String dirName) {
+		String realDirPath = Common.getDirPath(realRootDirPath, rootDirName, dirPath, dirName);
+
+		FileInfo dirInfo = null;
 		try {
-			FileUtils.forceMkdir(new File(realDirPath));
-			genRslt = true;
+			File dir = new File(realDirPath);
+			FileUtils.forceMkdir(dir);
+			dirInfo = Common.getFileInfo(rootDirName, dirPath, dir);
 		} catch(Exception e) {
 			log.debug(e.getMessage());
-			genRslt = false;
 		}
-		
-		return genRslt;
+		return dirInfo;
 	}
 
 	public ID3v2 generateMp3Id3Tag(String rootDirName, String dirPath, String mp3FileName) throws UnsupportedTagException, InvalidDataException, IOException {
-		String realFilePath = realRootDirPath + rootDirName + dirPath + "/" + mp3FileName;
+		String realFilePath = Common.getDirPath(realRootDirPath, rootDirName, dirPath, mp3FileName);
 
 		Mp3File mp3File = new Mp3File(realFilePath);
 		if (mp3File == null || !mp3File.hasId3v2Tag())
@@ -153,7 +183,7 @@ public class FileService {
 			int extStartIdx = mp3FileName.lastIndexOf('.');
 			String noExtFileName = mp3FileName.substring(0, extStartIdx);
 
-			String noExtRealFilePath = realRootDirPath + rootDirName + dirPath + "/" + noExtFileName;
+			String noExtRealFilePath = realRootDirPath + "/" + rootDirName + "/" + dirPath + "/" + noExtFileName;
 
 			File albumImageFile = new File(noExtRealFilePath + ".png");
 			FileOutputStream writer = new FileOutputStream(albumImageFile);
@@ -168,7 +198,7 @@ public class FileService {
 		int extStartIdx = videoFileName.lastIndexOf('.');
 		String noExtFileName = videoFileName.substring(0, extStartIdx);
 
-		String noExtRealFilePath = realRootDirPath + rootDirName + dirPath + "/" + noExtFileName;
+		String noExtRealFilePath = Common.getDirPath(realRootDirPath, rootDirName, dirPath, noExtFileName);
 
 		// 사용가능한 자막 파일 확인
 		File vttFile = new File(noExtRealFilePath + ".vtt");
@@ -185,14 +215,14 @@ public class FileService {
 		int extStartIdx = videoFileName.lastIndexOf('.');
 		String noExtFileName = videoFileName.substring(0, extStartIdx);
 
-		String noExtRealFilePath = realRootDirPath + rootDirName + dirPath + "/" + noExtFileName;
+		String noExtRealFilePath = Common.getDirPath(realRootDirPath, rootDirName, dirPath, noExtFileName);
 
 		// 썸네일 파일 확인
 		File thumbnailFile = new File(noExtRealFilePath + ".png");
 		if (thumbnailFile.exists())
 			return;
 
-		String realFilePath = realRootDirPath + rootDirName + dirPath + "/" + videoFileName;
+		String realFilePath = Common.getDirPath(realRootDirPath, rootDirName, dirPath, videoFileName);
 
 		ThumbnailGenerater.generateThumbnail(realFilePath, thumbnailFile);
 	}
@@ -205,7 +235,8 @@ public class FileService {
 		if (Common.isUnSafe(fileName))
 			return false;
 
-		File file = new File(realRootDirPath + rootDirName + dirPath + "/" + fileName);
+		String realFilePath = Common.getDirPath(realRootDirPath, rootDirName, dirPath, fileName);
+		File file = new File(realFilePath);
 		// 파일 유효성 검사
 		if (file == null || !file.exists())
 			return false;

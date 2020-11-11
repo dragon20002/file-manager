@@ -7,6 +7,8 @@ public class FileInfo {
 
 	private String rootDirName;
 	
+	private String dirPath;
+	
 	private String encName;
 
 	private boolean isDir;
@@ -14,10 +16,11 @@ public class FileInfo {
 	public FileInfo() {
 	}
 
-	public FileInfo(String name, long size, String rootDirName, String encName, boolean isDir) {
+	public FileInfo(String name, long size, String rootDirName, String dirPath, String encName, boolean isDir) {
 		this.name = name;
 		this.size = size;
 		this.rootDirName = rootDirName;
+		this.dirPath = dirPath;
 		this.encName = encName;
 		this.isDir = isDir;
 	}
@@ -46,6 +49,14 @@ public class FileInfo {
 		this.rootDirName = rootDirName;
 	}
 
+	public String getDirPath() {
+		return dirPath;
+	}
+
+	public void setDirPath(String dirPath) {
+		this.dirPath = dirPath;
+	}
+
 	public String getEncName() {
 		return encName;
 	}
@@ -64,8 +75,8 @@ public class FileInfo {
 
 	@Override
 	public String toString() {
-		return "FileInfo [name=" + name + ", size=" + size + ", rootDirName=" + rootDirName + ", encName=" + encName
-				+ ", isDir=" + isDir + "]";
+		return "FileInfo [name=" + name + ", size=" + size + ", rootDirName=" + rootDirName + ", dirPath=" + dirPath
+				+ ", encName=" + encName + ", isDir=" + isDir + "]";
 	}
 
 }

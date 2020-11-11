@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,16 +19,14 @@ public class Common {
 	/**
 	 * Convert to FileInfo
 	 */
-	public static FileInfo getFileInfo(File file) {
+	public static FileInfo getFileInfo(String rootDirName, String dirPath, File file) {
 		if (file == null) return null;
-
-		String rootDirName = file.getParent();
-		rootDirName = rootDirName.substring(rootDirName.lastIndexOf('\\') + 1);
-
+		
 		return new FileInfo(
 				file.getName(),
 				file.length() / 1024,
 				rootDirName,
+				dirPath,
 				encodeURI(file.getName()),
 				file.isDirectory());
 	}
@@ -64,6 +63,15 @@ public class Common {
 		return file;
 	}
 
+	public static String getDirPath(String realRootDirPath, String ... dirNames) {
+		StringBuilder sb = new StringBuilder(realRootDirPath);
+		Stream.of(dirNames).map((dirName) -> dirName.replaceAll("/", ""))
+			.filter((dirName) -> dirName.length() > 0)
+			.forEach((dirName) -> sb.append("/" + dirName));
+
+		return sb.toString();
+	}
+	
 	/* ---------- REGEX ----------- */
 	
 	private static Pattern unsafeFilenamePtn = Pattern.compile("/(\\/\\.\\.)|(\\.\\.\\/)|(\\\\\\.\\.)|(\\.\\.\\\\)/"); 
@@ -104,7 +112,7 @@ public class Common {
 		@Override
 		public boolean accept(File pathname) {
 			String name = pathname.getName();
-			return name.endsWith(".mp4") || name.endsWith(".avi") || name.endsWith(".mkv");
+			return pathname.isDirectory() || name.endsWith(".mp4") || name.endsWith(".avi") || name.endsWith(".mkv");
 		}
 	}
 	
