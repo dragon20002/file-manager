@@ -100,7 +100,7 @@
 			titleH4.text(fileInfo.name);
 
 			// audio tag
-			let audioSrc = '/' + encodeURI(fileInfo.rootDirName + '/' + fileInfo.dirPath + '/' + fileInfo.name);
+			let audioSrc = encodeURI(fileInfo.rootDirName + '/' + fileInfo.dirPath + '/' + fileInfo.name);
 			audio.find('source').attr('src', audioSrc);
 	
 			audio[0].load();

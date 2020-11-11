@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.servlet.ServletContext;
+
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -52,13 +53,13 @@ public class FileService {
 	public static final String SAFE_DIR_NAME = "safe";
 	public static final String[] fs = { DIR_NAME, SAFE_DIR_NAME };
 
-	private final DefaultResourceLoader loader;
+	private final ServletContext context;
 
 	private final String realRootDirPath;
 
-	public FileService(DefaultResourceLoader loader) throws IOException {
-		this.loader = loader;
-		realRootDirPath = loader.getResource("file:src/main/webapp").getFile().getAbsolutePath();
+	public FileService(ServletContext context) throws IOException {
+		this.context = context;
+		this.realRootDirPath = context.getRealPath("/");
 		log.debug("realRootDirPath={}", realRootDirPath);
 	}
 

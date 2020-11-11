@@ -69,7 +69,7 @@
 		if (dirName === null || dirName.length <= 0)
 			return;
 
-		$.post(`/api/dir/${getRootDirName()}`, { dirName }).done(function(data, textStatus, xhr) {
+		$.post(`api/dir/${getRootDirName()}`, { dirName }).done(function(data, textStatus, xhr) {
 			if (xhr.status == 201) { // 새 폴더 추가
 				appendFiles([data]); // dir info
 			}
@@ -82,7 +82,7 @@
 
 		$.ajax({
 			method: "post",
-			url: `/api/files/${getRootDirName()}`,
+			url: `api/files/${getRootDirName()}`,
 			data,
 			contentType: false,
 			processData: false,
@@ -102,7 +102,7 @@
 		if (!depth || depth < 0)
 			return;
 
-		$.get(`/api/dir/${depth - 1}`).done(function(data, textStatus, xhr) {
+		$.get(`api/dir/${depth - 1}`).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) {
 				alert('작업위치 변경 실패');
 				return;
@@ -203,7 +203,7 @@
 		if (!depth || depth < 0)
 			depth = 0;
 
-		$.get(`/api/dir/${depth + 1}/${encodeURI(dirName)}`).done(function(data, textStatus, xhr) {
+		$.get(`api/dir/${depth + 1}/${encodeURI(dirName)}`).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) {
 				alert('작업위치 변경 실패');
 				return;
@@ -233,7 +233,7 @@
 
 		$.ajax({
 			method: "delete",
-			url: `/api/files/${getRootDirName()}/${encodeURI(getNameFromPath(filePath))}`,
+			url: `api/files/${getRootDirName()}/${encodeURI(getNameFromPath(filePath))}`,
 		}).done(function(data, textStatus, xhr) {
 			if (xhr.status != 200) {
 				alert('삭제 실패');

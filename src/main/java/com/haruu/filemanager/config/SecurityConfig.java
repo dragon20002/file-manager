@@ -28,7 +28,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
         		"http://localhost:8080",
-                "http://localhost:50080"));
+                "http://localhost:50080",
+                "http://192.168.0.3:8080/file-manager",
+                "http://192.168.219.100/file-manager",
+                "http://52.78.3.240:8080/file-manager"));
         configuration.setAllowedMethods(Collections.singletonList("*"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
 
