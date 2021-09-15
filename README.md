@@ -38,29 +38,3 @@
 | 영상 목록 | GET | /api/mp4-files | - |
 | 영상 재생 | GET | /api/mp4-files/%ROOT_DIR_NAME%/{fileName} | - |
 | 영상 재생 | GET | /api/mp4-files/%ROOT_SAFE_DIR_NAME%/{fileName} | - |
-
-## Dependencies
-
-* Spring Boot 2.1.2
-> spring-boot-starter-security<br>
-> spring-boot-starter-web (tomcat9 embed)<br>
-> mp3agic<br>
-> jcodec<br>
-<p>
-
-* Thymeleaf
-> spring-boot-starter-thymeleaf<br>
-> thymeleaf-layout-dialect
-
-<p>
-
-* Test
-> spring-boot-starter-test<br>
-
-<p>
-
-
-## Import to Eclipse
-1. Clone & Import this project<br>
-2. Right click the Project Root -> Spring Tools -> Add Spring Project Nature<br>
-3. Right click the Project Root -> Configure -> Convert to Maven Project<br>

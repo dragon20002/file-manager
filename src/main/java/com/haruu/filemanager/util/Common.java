@@ -63,15 +63,12 @@ public class Common {
 		return file;
 	}
 
-	public static String getDirPath(String realRootDirPath, String ... dirNames) {
+	public static String getDirPath(String realRootDirPath, String ... dirPaths) {
 		StringBuilder sb = new StringBuilder(realRootDirPath);
-		Stream.of(dirNames).map((dirName) -> dirName.replaceAll("/", ""))
-			.filter((dirName) -> dirName.length() > 0)
-			.forEach((dirName) -> sb.append("/" + dirName));
-
-		return sb.toString();
+		Stream.of(dirPaths).forEach(dirPath -> sb.append("/" + dirPath));
+		return sb.toString().replaceAll("/\\/+/", "/");
 	}
-	
+
 	/* ---------- REGEX ----------- */
 	
 	private static Pattern unsafeFilenamePtn = Pattern.compile("/(\\/\\.\\.)|(\\.\\.\\/)|(\\\\\\.\\.)|(\\.\\.\\\\)/"); 
