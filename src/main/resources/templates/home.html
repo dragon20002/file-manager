@@ -244,6 +244,7 @@
 			for (let i = 0; i < fileTableRows.length; i++) {
 				let tr = fileTableRows[i];
 				if (tr.children[FILE_ROOT_COL].innerText + "/" +
+						dirPath + "/" +
 						tr.children[FILE_NAME_COL].innerText == filePath) {
 					tr.remove();
 					break;
